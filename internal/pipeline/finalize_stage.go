@@ -2,6 +2,9 @@ package pipeline
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -35,7 +38,7 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 	}
 
 	// 1b. Skill evolution postscript (matching v2 loop_finalize.go:52-57).
-	if s.deps.SkillPostscript != nil && state.Observe.FinalContent != "" {
+	if s.deps.SkillPostscript != nil && state.Observe.FinalContent != "" && state.StopReason == "" {
 		state.Observe.FinalContent = s.deps.SkillPostscript(ctx, state.Observe.FinalContent, state.Tool.TotalToolCalls)
 	}
 
@@ -66,15 +69,13 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 		state.Tool.MediaResults = append(state.Tool.MediaResults, MediaResult{Path: mf.Path, ContentType: ct})
 	}
 
-	// 3. Deduplicate + populate media sizes
-	s.processMedia(state)
-
-	// 3b. Persist assistant-generated images (Codex image_generation_call) to disk
-	// BEFORE building the assistant message so MediaRefs are included in the session store.
-	// Source is state.Observe.AssistantImages, which ObserveStage accumulates across
-	// every iteration — required because LastResponse holds only the final iteration's
-	// response (an image emitted mid-loop alongside a tool call would otherwise be lost).
-	var assistantImageRefs []providers.MediaRef
+	// 3. Persist assistant-generated images (Codex image_generation_call) to disk
+	// and fold them into MediaResults BEFORE deduplication, so a generated image
+	// and an explicitly attached copy of it collapse into one attachment.
+	// Source is state.Observe.AssistantImages, which ObserveStage accumulates
+	// across every iteration — required because LastResponse holds only the final
+	// iteration's response (an image emitted mid-loop alongside a tool call would
+	// otherwise be lost).
 	if s.deps.PersistAssistantImages != nil && len(state.Observe.AssistantImages) > 0 {
 		workspace := ""
 		if state.Workspace != nil {
@@ -85,11 +86,21 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 		// the scratch message — we harvest MediaRefs from there.
 		scratch := &providers.Message{Images: state.Observe.AssistantImages}
 		s.deps.PersistAssistantImages(scratch, workspace)
-		assistantImageRefs = scratch.MediaRefs
+		for _, ref := range scratch.MediaRefs {
+			state.Tool.MediaResults = append(state.Tool.MediaResults, MediaResult{
+				Path:        ref.Path,
+				ContentType: ref.MimeType,
+				Prompt:      ref.Prompt,
+			})
+		}
 		state.Observe.AssistantImages = nil // prevent double-processing on retries
 	}
 
-	// 3c. Build final assistant message with MediaRefs for session persistence.
+	// 4. Populate sizes and drop duplicates across every producer.
+	s.processMedia(state)
+
+	// 5. Build the final assistant message from the deduplicated media set, so
+	// session history and outbound delivery carry exactly the same attachments.
 	assistantMsg := providers.Message{
 		Role:     "assistant",
 		Content:  state.Observe.FinalContent,
@@ -113,20 +124,7 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 			Prompt:   mr.Prompt,
 		})
 	}
-	// Append persisted assistant image refs (Codex image_generation_call output).
-	assistantMsg.MediaRefs = append(assistantMsg.MediaRefs, assistantImageRefs...)
 	state.Messages.AppendPending(assistantMsg)
-
-	// Surface generated images (Codex image_generation_call) on MediaResults
-	// too, so they reach RunResult.Media / outbound channel delivery — not just
-	// session history (MediaRefs were already appended to the message above).
-	for _, ref := range assistantImageRefs {
-		mr := MediaResult{Path: ref.Path, ContentType: ref.MimeType, Prompt: ref.Prompt}
-		if info, statErr := os.Stat(ref.Path); statErr == nil {
-			mr.Size = info.Size()
-		}
-		state.Tool.MediaResults = append(state.Tool.MediaResults, mr)
-	}
 
 	// 4. Flush remaining pending messages to session store.
 	// Capture the pre-flush history length so metadata msgCount reflects
@@ -163,7 +161,8 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 	// and advances the cumulative compaction count so episodic can progress (Việc 1-B).
 	// Both mid-loop paths (prune_stage + compactForFinalRequestBudget) set this flag.
 	if s.deps.MaybeSummarize != nil {
-		s.deps.MaybeSummarize(ctx, state.Input.SessionKey, state.Prune.MidLoopCompacted)
+		pressure := state.Prune.MidLoopCompacted || state.Compact.Unavailable || state.StopReason != ""
+		s.deps.MaybeSummarize(ctx, state.Input.SessionKey, pressure)
 	}
 
 	// 8. Emit session.completed for consolidation pipeline (episodic → semantic → dreaming).
@@ -195,6 +194,8 @@ func (s *FinalizeStage) Execute(ctx context.Context, state *RunState) error {
 			SessionID: state.Input.SessionKey,
 			TenantID:  store.TenantIDFromContext(ctx),
 			AgentID:   store.AgentIDFromContext(ctx),
+			SenderID:  state.Input.SenderID,
+			UserID:    state.Input.UserID,
 			HookEvent: hooks.EventStop,
 		})
 	}
@@ -215,14 +216,43 @@ func (s *FinalizeStage) processMedia(state *RunState) {
 		}
 	}
 
-	// Deduplicate by path
-	seen := make(map[string]bool, len(media))
+	// Deduplicate. Path equality alone is not enough: an agent that generates an
+	// image and then attaches a copy of it under a different name produces two
+	// entries for one picture, and both were delivered — the user received the
+	// same image twice. Identical bytes collapse regardless of path.
+	seenPath := make(map[string]bool, len(media))
+	seenDigest := make(map[string]bool, len(media))
 	deduped := make([]MediaResult, 0, len(media))
 	for _, m := range media {
-		if !seen[m.Path] {
-			seen[m.Path] = true
-			deduped = append(deduped, m)
+		if m.Path != "" {
+			if seenPath[m.Path] {
+				continue
+			}
+			seenPath[m.Path] = true
+
+			// Remote or already-cleaned paths simply skip content comparison.
+			if digest, err := fileDigest(m.Path); err == nil {
+				if seenDigest[digest] {
+					continue
+				}
+				seenDigest[digest] = true
+			}
 		}
+		deduped = append(deduped, m)
 	}
 	state.Tool.MediaResults = deduped
+}
+
+// fileDigest returns the SHA-256 of a local file.
+func fileDigest(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
