@@ -1,0 +1,15 @@
+Rà soát đặt hàng Website từ 01/06/2026 đến 28/08/2026 11:09
+Dữ liệu orders đồng bộ lúc 28/08/2026 11:09
+
+Tổng active customerCode trong KB: 184
+Đã có ít nhất 1 đơn Website: 179
+Chưa có đơn Website: 5
+Tổng orders trong kỳ: 3713
+Tổng orders Website trong kỳ: 3097
+
+Danh sách chưa có đơn Website:
+- KHO YAGAMI BÌNH DƯƠNG | None | KH000007 | YAGAMI THỦ ĐỨC
+- KHO YAGAMI BÌNH DƯƠNG | THỨ 2 | KH000126 | Dodo Pizza
+- KHO YAGAMI BÌNH DƯƠNG | THỨ 6 | KH000190 | MONO TÂY NINH
+- Tổng kho YAGAMI | GỬI XE NGOÀI | KH000189 | XÉM NƯỚNG
+- Tổng kho YAGAMI | THỨ 3 | KH000004 | YAGAMI CAI LẬY

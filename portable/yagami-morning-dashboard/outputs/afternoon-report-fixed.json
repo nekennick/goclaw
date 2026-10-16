@@ -1,0 +1,407 @@
+{
+  "checkLocal": "31/07/2026 16:02:47",
+  "syncLocal": "31/07/2026 16:02:47",
+  "day": "THỨ 6",
+  "weekStart": "27/07/2026 00:00",
+  "kbVersion": 9,
+  "kbVerifiedAt": "2026-07-25",
+  "scheduled": 33,
+  "byWarehouseSchedule": {
+    "CAO_LANH": 23,
+    "BINH_DUONG": 10
+  },
+  "classify": {
+    "done": [
+      {
+        "code": "KH000041",
+        "name": "YAGAMI CÀ MAU",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032509"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000075",
+        "name": "YAGAMI PHƯỚC LONG - BẠC LIÊU",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032472"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000076",
+        "name": "YAGAMI NĂM CĂN",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032506"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000079",
+        "name": "YAGAMI GIÁ RAI",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032490"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000085",
+        "name": "YAGAMI SÔNG ĐỐC",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032520"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000100",
+        "name": "YAGAMI ĐẦM DƠI",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032502"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000165",
+        "name": "YAGAMI NGAN DỪA",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032489"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000143",
+        "name": "YAGAMI CÁI NƯỚC",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032474"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000069",
+        "name": "YAGAMI AN BIÊN",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032507"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000169",
+        "name": "YAGAMI VĨNH THUẬN",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032503"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000077",
+        "name": "YAGAMI CÁI TẮC",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032476"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000141",
+        "name": "YAGAMI CHÂU THÀNH - SÓC TRĂNG",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032500"
+        ],
+        "note": "có DH cũ/khác trong kỳ treo cần đối soát"
+      },
+      {
+        "code": "KH000180",
+        "name": "YAGAMI TRẦN VĂN THỜI",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032540",
+          "DH032369"
+        ],
+        "note": "có DH cũ/khác trong kỳ treo cần đối soát"
+      },
+      {
+        "code": "KH000202",
+        "name": "YAGAMI TT. THỨ 11",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032483"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000176",
+        "name": "YAGAMI TẮC VÂN",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032527"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000191",
+        "name": "YAGAMI HUỲNH HỮU NGHĨA",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032522"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000206",
+        "name": "YAGAMI PHÚ TÂM",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032511"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000218",
+        "name": "YAGAMI CÂY DƯƠNG",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032512"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000018",
+        "name": "YAGAMI SA ĐÉC",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032536",
+          "DH032443"
+        ],
+        "note": "có DH cũ/khác trong kỳ treo cần đối soát"
+      },
+      {
+        "code": "KH000088",
+        "name": "YAGAMI GÀNH HÀO",
+        "warehouse": "CAO_LANH",
+        "orders": [
+          "DH032465"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000130",
+        "name": "YAGAMI CỦ CHI",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032504",
+          "DH032501"
+        ],
+        "note": "có DH cũ/khác trong kỳ treo cần đối soát"
+      },
+      {
+        "code": "KH000092",
+        "name": "YAGAMI TRẢNG BÀNG",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032534"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000035",
+        "name": "YAGAMI GÒ DẦU",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032526"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000177",
+        "name": "YAGAMI PHƯỚC ĐÔNG",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032514"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000129",
+        "name": "YAGAMI HOÀ THÀNH",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032518"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000072",
+        "name": "YAGAMI TÂY NINH",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032517"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000166",
+        "name": "YAGAMI DƯƠNG MINH CHÂU",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032505"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000087",
+        "name": "YAGAMI TÂN CHÂU - TN",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032525"
+        ],
+        "note": ""
+      },
+      {
+        "code": "KH000207",
+        "name": "YAGAMI TÂN BIÊN",
+        "warehouse": "BINH_DUONG",
+        "orders": [
+          "DH032516"
+        ],
+        "note": ""
+      }
+    ],
+    "pending": [],
+    "missing": [
+      {
+        "code": "KH000150",
+        "name": "YAGAMI THỚI BÌNH",
+        "warehouse": "CAO_LANH"
+      },
+      {
+        "code": "KH000032",
+        "name": "YAGAMI NGÃ 7 HẬU GIANG",
+        "warehouse": "CAO_LANH"
+      },
+      {
+        "code": "KH000102",
+        "name": "YAGAMI SÓC TRĂNG",
+        "warehouse": "CAO_LANH"
+      },
+      {
+        "code": "KH000190",
+        "name": "MONO TÂY NINH",
+        "warehouse": "BINH_DUONG"
+      }
+    ],
+    "reconcile": []
+  },
+  "reconcileDhCount": 8,
+  "inv4": [
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SML",
+      "name": "Súp Mì Lớn",
+      "onHand": 2141,
+      "reserved": 128,
+      "available": 2013,
+      "need": 326
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SMN",
+      "name": "Súp Mì Nhỏ",
+      "onHand": 472,
+      "reserved": 10,
+      "available": 462,
+      "need": 10
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SLTL",
+      "name": "Súp Lẩu Thái Lớn",
+      "onHand": 451,
+      "reserved": 0,
+      "available": 451,
+      "need": 71
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "MYG",
+      "name": "Mì Yagami",
+      "onHand": 993,
+      "reserved": 132,
+      "available": 861,
+      "need": 270
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SML",
+      "name": "Súp Mì Lớn",
+      "onHand": 934,
+      "reserved": 0,
+      "available": 934,
+      "need": 140
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SMN",
+      "name": "Súp Mì Nhỏ",
+      "onHand": 641,
+      "reserved": 0,
+      "available": 641,
+      "need": 0
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SLTL",
+      "name": "Súp Lẩu Thái Lớn",
+      "onHand": 374,
+      "reserved": 0,
+      "available": 374,
+      "need": 35
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "MYG",
+      "name": "Mì Yagami",
+      "onHand": 359,
+      "reserved": 0,
+      "available": 359,
+      "need": 135
+    }
+  ],
+  "ordersByKvWarehouse": {
+    "Tổng kho YAGAMI": {
+      "count": 31,
+      "value": "868.195.500"
+    },
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "count": 9,
+      "value": "404.210.800"
+    }
+  },
+  "entities": {
+    "branches": {
+      "ok": true,
+      "count": 2,
+      "apiTotal": 2
+    },
+    "customers": {
+      "ok": true,
+      "count": 228,
+      "apiTotal": 228
+    },
+    "products": {
+      "ok": true,
+      "count": 553,
+      "apiTotal": 553
+    }
+  }
+}

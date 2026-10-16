@@ -67,6 +67,7 @@ func (c *Channel) handleDM(msg protocol.UserMessage) {
 	)
 
 	c.startTyping(threadID, protocol.ThreadTypeUser)
+	c.addHeartReaction(threadID, protocol.ThreadTypeUser, msg.Data)
 
 	// Collect contact for DM messages.
 	if cc := c.ContactCollector(); cc != nil {
@@ -96,6 +97,10 @@ func (c *Channel) handleGroupMessage(msg protocol.GroupMessage) {
 	if senderName == "" {
 		senderName = senderID
 	}
+	// Every inbound group message is an authenticated observation of this
+	// member. Keep it as a supplemental cache entry; native outbound mentions
+	// still require a current roster fetch before an unknown member is tagged.
+	c.rememberGroupMember(threadID, senderID, senderName)
 
 	body, media := extractContentAndMedia(msg.Data.Content)
 	// A reply to an image should carry the image itself, not just the
@@ -154,6 +159,7 @@ func (c *Channel) handleGroupMessage(msg protocol.GroupMessage) {
 	}
 
 	c.startTyping(threadID, protocol.ThreadTypeGroup)
+	c.addHeartReaction(threadID, protocol.ThreadTypeGroup, msg.Data.TMessage)
 
 	// Collect media from pending history entries (images sent before this @mention).
 	// Must come after BuildContext — CollectMedia nulls out Media fields to prevent double-cleanup.
@@ -175,6 +181,25 @@ func (c *Channel) handleGroupMessage(msg protocol.GroupMessage) {
 
 	// Clear pending history after sending to agent (matches Telegram/Discord/Slack/Feishu pattern).
 	c.GroupHistory().Clear(threadID)
+}
+
+// addHeartReaction acknowledges an inbound message that the agent will handle.
+// It runs asynchronously so an unavailable reaction endpoint never delays the
+// user's reply or affects message processing.
+func (c *Channel) addHeartReaction(threadID string, threadType protocol.ThreadType, msg protocol.TMessage) {
+	sess := c.session()
+	if sess == nil || msg.MsgID == "" || msg.CliMsgID == "" {
+		return
+	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := protocol.AddHeartReaction(ctx, sess, threadID, threadType, msg.MsgID, msg.CliMsgID); err != nil {
+			slog.Debug("zalo_personal: heart reaction skipped", "thread_id", threadID, "error", err)
+			return
+		}
+		slog.Info("zalo_personal: heart reaction sent", "thread_id", threadID, "message_id", msg.MsgID)
+	}()
 }
 
 // startTyping starts a typing indicator with keepalive for the given thread.

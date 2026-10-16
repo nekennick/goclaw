@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-19T10:13:02.001949+07:00",
+  "reportDate": "19/09/2026",
+  "reportTitle": "Báo cáo sáng hôm nay",
+  "source": {
+    "type": "KiotViet",
+    "rawReport": "outputs/morning-report.txt"
+  },
+  "sync": {
+    "ordersThrough": "07:30",
+    "inventorySyncedAt": "07:30",
+    "isCatchUp": false
+  },
+  "summary": {
+    "scheduledBranches": 12,
+    "placedBranches": 11,
+    "scheduledOrders": 12,
+    "scheduledValue": 374443500,
+    "missingBranches": 1,
+    "externalOrders": 6,
+    "externalValue": 145400000,
+    "offScheduleOrders": 11,
+    "offScheduleValue": 1006655500,
+    "mainWarning": "Tổng kho YAGAMI: MYG thiếu 280; 1 chi nhánh chưa đặt"
+  },
+  "warehouses": [
+    {
+      "name": "Tổng kho YAGAMI",
+      "branches": 11,
+      "orders": 12,
+      "value": 374443500,
+      "branchNames": [
+        "CÁI TÀU THƯỢNG",
+        "CHỢ MỚI",
+        "TÂN CHÂU",
+        "TÂN CHÂU - AG",
+        "MỸ LUÔNG",
+        "BẠC LIÊU",
+        "CHỢ VÀM",
+        "PHÚ LỘC",
+        "NGÃ NĂM",
+        "HÒA BÌNH",
+        "LONG MỸ"
+      ]
+    },
+    {
+      "name": "KHO YAGAMI BÌNH DƯƠNG",
+      "branches": 0,
+      "orders": 0,
+      "value": 0,
+      "branchNames": []
+    }
+  ],
+  "missingByWarehouse": {
+    "Tổng kho YAGAMI": [
+      "PHÚ TÂN"
+    ],
+    "KHO YAGAMI BÌNH DƯƠNG": []
+  },
+  "externalByWarehouse": {
+    "Tổng kho YAGAMI": {
+      "branches": 6,
+      "orders": 6,
+      "value": 145400000,
+      "branchNames": [
+        "CHIBA CAO LÃNH",
+        "YAGAMI CAO LÃNH",
+        "YAGAMI ĐẠI HỌC",
+        "YAGAMI ÔNG BẦU",
+        "YAGAMI NGÃ NĂM - TÂN THÀNH",
+        "YAGAMI LAI VUNG"
+      ]
+    },
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "branches": 0,
+      "orders": 0,
+      "value": 0,
+      "branchNames": []
+    }
+  },
+  "offScheduleByWarehouse": {
+    "Tổng kho YAGAMI": {
+      "orders": 11,
+      "value": 1006655500
+    },
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "orders": 0,
+      "value": 0
+    }
+  },
+  "inventory": {
+    "Tổng kho YAGAMI": {
+      "SML": {
+        "code": "SML",
+        "need": 147,
+        "onHand": 2345,
+        "reserved": 737,
+        "available": 1608,
+        "shortage": 0,
+        "warning": false
+      },
+      "SMN": {
+        "code": "SMN",
+        "need": 62,
+        "onHand": 321,
+        "reserved": 97,
+        "available": 224,
+        "shortage": 0,
+        "warning": false
+      },
+      "SLTL": {
+        "code": "SLTL",
+        "need": 41,
+        "onHand": 1038,
+        "reserved": 161,
+        "available": 877,
+        "shortage": 0,
+        "warning": false
+      },
+      "MYG": {
+        "code": "MYG",
+        "need": 202,
+        "onHand": 214,
+        "reserved": 292,
+        "available": -78,
+        "shortage": 280,
+        "warning": true
+      }
+    },
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "SML": {
+        "code": "SML",
+        "need": 0,
+        "onHand": 1271,
+        "reserved": 0,
+        "available": 1271,
+        "shortage": 0,
+        "warning": false
+      },
+      "SMN": {
+        "code": "SMN",
+        "need": 0,
+        "onHand": 646,
+        "reserved": 0,
+        "available": 646,
+        "shortage": 0,
+        "warning": false
+      },
+      "SLTL": {
+        "code": "SLTL",
+        "need": 0,
+        "onHand": 409,
+        "reserved": 0,
+        "available": 409,
+        "shortage": 0,
+        "warning": false
+      },
+      "MYG": {
+        "code": "MYG",
+        "need": 0,
+        "onHand": 13,
+        "reserved": 0,
+        "available": 13,
+        "shortage": 0,
+        "warning": false
+      }
+    }
+  },
+  "alerts": [
+    "Tổng kho YAGAMI: MYG thiếu 280",
+    "1 chi nhánh chưa đặt"
+  ]
+}

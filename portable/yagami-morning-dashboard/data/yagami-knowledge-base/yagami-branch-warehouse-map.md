@@ -1,0 +1,203 @@
+# Yagami Branch and Warehouse Map
+
+Verified: 2026-08-20
+Knowledge version: 10
+
+Database xác nhận trên Yagami Dashboard là nguồn vận hành; file này là bản xuất dễ đọc cho AI và con người.
+
+Important rule: KiotViet branchId chỉ phản ánh nơi tạo khách hàng, không dùng để quyết định kho/lịch giao; ưu tiên lịch vận hành thực tế đã được Anh Khoa xác nhận.
+
+## CAO_LANH
+
+- YAGAMI AN LONG | KH000010 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI AN PHONG | KH000144 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI AN THẠNH | KH000205 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI BÌNH MINH | KH000124 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI BÌNH TÂN - VL | KH000136 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI HỒNG NGỰ | KH000012 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI HỒNG NGỰ 2 | KH000226 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI KẾ SÁCH | KH000187 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI LONG PHÚ | KH000197 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI LỊCH HỘI THƯỢNG | KH000229 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI MÁI DẦM | KH000161 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI NGÃ SÁU | KH000170 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI TAM BÌNH | KH000139 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI TAM NÔNG | KH000015 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI THANH BÌNH | KH000008 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI TRẦN ĐỀ | KH000105 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI TÂN HƯNG | KH000111 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI TÂN HỒNG | KH000014 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI VĨNH CHÂU | KH000074 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI VĨNH HƯNG | KH000122 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI VĨNH LONG | KH000114 | ACTIVE | SCHEDULED_TRUCK | THỨ 2
+- YAGAMI BA TRI | KH000052 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI BÌNH ĐẠI | KH000057 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI CAI LẬY | KH000004 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI CHỢ GẠO | KH000094 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI CHỢ LÁCH - BẾN TRE | KH000002 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI CÁI BÈ | KH000003 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI CẦN ĐƯỚC | KH000115 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI GIA THUẬN | KH000223 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI GIỒNG TRÔM | KH000214 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI GÒ CÔNG | KH000160 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI GÒ ĐEN | KH000073 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI MỎ CÀY BẮC | KH000227 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI MỎ CÀY NAM | KH000066 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI MỸ THO | KH000049 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI THẠNH PHÚ | KH000125 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI TÂN AN | KH000006 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI TÂN HƯƠNG | KH000183 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI VĨNH BÌNH (GCT) | KH000151 | ACTIVE | SCHEDULED_TRUCK | THỨ 3
+- YAGAMI VĨNH KIM | KH000233 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI AN CHÂU | KH000090 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI AN PHÚ | KH000113 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI BA CHÚC | KH000228 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI CHI LĂNG | KH000164 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI CHÂU PHÚ | KH000117 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI CHÂU ĐỐC | KH000033 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Moved from THỨ 3 to THỨ 4 from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI CẦN ĐĂNG | KH000175 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI GIỒNG RIỀNG | KH000138 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI GÒ QUAO | KH000127 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI HÀ TIÊN | KH000146 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI HÒN ĐẤT | KH000084 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI KIÊN LƯƠNG | KH000060 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI LONG XUYÊN | KH000031 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI MINH LƯƠNG | KH000178 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI NHÀ BÀNG | KH000081 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI PHÚ HÒA - AN GIANG | KH000101 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI QUỐC THÁI | KH000118 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI RẠCH GIÁ | KH000042 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI RẠCH SỎI | KH000145 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI THOẠI SƠN | KH000078 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI TRI TÔN | KH000071 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI TÂN HIỆP | KH000091 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI VĨNH THẠNH | KH000147 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- YAGAMI ÓC EO | KH000181 | ACTIVE | SCHEDULED_TRUCK | THỨ 4
+- Kho Tổng Trà Vinh | KH000068 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI CỜ ĐỎ | KH000044 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI LẤP VÒ | KH000024 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI MỘT NGÀN | KH000149 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI NÀNG MAU | KH000093 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI PHONG ĐIỀN | KH000108 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI THỐT NỐT | KH000021 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI THỚI LAI | KH000070 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI TIỂU CẦN | KH000086 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI TP.CẦN THƠ | KH000204 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI TRUNG AN | KH000154 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI TRÀ ÔN | KH000047 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI VỊ THANH | KH000051 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI Ô MÔN | KH000163 | ACTIVE | SCHEDULED_TRUCK | THỨ 5
+- YAGAMI AN BIÊN | KH000069 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI CHÂU THÀNH - SÓC TRĂNG | KH000141 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI CÀ MAU | KH000041 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI CÁI NƯỚC | KH000143 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI CÁI TẮC | KH000077 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI CÂY DƯƠNG | KH000218 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI GIÁ RAI | KH000079 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI GÀNH HÀO | KH000088 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI HUỲNH HỮU NGHĨA | KH000191 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI KIẾN TƯỜNG | KH000027 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI NGAN DỪA | KH000165 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI NGÃ 7 HẬU GIANG | KH000032 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI NĂM CĂN | KH000076 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI PHÚ TÂM | KH000206 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI PHƯỚC LONG - BẠC LIÊU | KH000075 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI SA ĐÉC | KH000018 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI SÓC TRĂNG | KH000102 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI SÔNG ĐỐC | KH000085 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI THÁP MƯỜI | KH000083 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI THẠNH HÓA | KH000182 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI THỚI BÌNH | KH000150 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI TRƯỜNG XUÂN | KH000211 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI TRẦN VĂN THỜI | KH000180 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI TT. THỨ 11 | KH000202 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI TÂN THẠNH | KH000188 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI TẮC VÂN | KH000176 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI VĨNH THUẬN | KH000169 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI ĐẦM DƠI | KH000100 | ACTIVE | SCHEDULED_TRUCK | THỨ 6
+- YAGAMI ĐỨC HUỆ | KH000195 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- CHIBA PHƯỚC THIỀN | KH000222 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Moved from THỨ 7 to THỨ 3 per Anh Khoa confirmation on 2026-09-09; effective for morning reports.
+- CHIBA TÂN CHÂU | KH000216 | ACTIVE | SCHEDULED_TRUCK | THỨ 7 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI BẠC LIÊU | KH000193 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI CHỢ MỚI | KH000029 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI CHỢ VÀM | KH000213 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI CÁI TÀU THƯỢNG | KH000232 | ACTIVE | SCHEDULED_TRUCK | THỨ 7 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- YAGAMI HÒA BÌNH | KH000089 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI LONG MỸ | KH000016 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI MỸ LUÔNG | KH000030 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI NGÃ NĂM | KH000017 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI PHÚ LỘC | KH000209 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI PHÚ TÂN | KH000028 | ACTIVE | SCHEDULED_TRUCK | THỨ 7
+- YAGAMI PHƯỚC THIỀN | KH000221 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Moved from THỨ 7 to THỨ 3 per Anh Khoa confirmation on 2026-09-09; effective for morning reports.
+- YAGAMI TÂN CHÂU - AG | KH000133 | ACTIVE | SCHEDULED_TRUCK | THỨ 7 | Updated from newest route image confirmed by Anh Khoa on 2026-08-20.
+- CHIBA CAO LÃNH | KH000198 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- HAKIMI VĨNH LONG | KH000043 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- XÉM NƯỚNG | KH000189 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI CAO LÃNH | KH000001 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI CÁI TÀU HẠ | KH000019 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI HÒA PHÚ - VĨNH LONG | KH000020 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI LAI VUNG | KH000022 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI NGÃ NĂM - TÂN THÀNH | KH000186 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI PHÚ QUỐC | KH000110 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI TÂN BÌNH | KH000009 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI ÔNG BẦU | KH000172 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- YAGAMI ĐẠI HỌC | KH000025 | ACTIVE | EXTERNAL_VEHICLE | GỬI XE NGOÀI
+- QUÁN LẨU A LONG | KH000215 | ACTIVE | UNSPECIFIED | None | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet.
+- YAGAMI HẬU NGHĨA | KH000142 | ACTIVE | UNSPECIFIED | UNSPECIFIED | Removed from active weekly branch route after newest route image confirmed by Anh Khoa on 2026-08-20; not listed in new weekly branch schedule.
+
+## BINH_DUONG
+
+- Dodo Pizza | KH000126 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI AN TÂY | KH000158 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI BÀU BÀNG | KH000162 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI BÌNH LONG | KH000153 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI CHƠN THÀNH | KH000137 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI HỘI NGHĨA | KH000201 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI LỘC NINH | KH000225 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Khai trương YAGAMI Lộc Ninh - Chi nhánh 209 từ 28.06 đến 30.06.2026. Địa chỉ: Đường Nguyễn Tất Thành, phường Lộc Ninh, tỉnh Đồng Nai. Hotline/Zalo: 0879 368 839. Giờ hoạt động: 08:00-21:30. CustomerCode KiotViet chưa được cung cấp trong thông tin cập nhật. KiotViet customerCode confirmed from API sync on 2026-07-10: KH000225; KiotViet customerId 46990922; debt at sync: 167996500.
+- YAGAMI MỸ PHƯỚC 1 | KH000167 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI PHÚ CHÁNH | KH000179 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI PHƯỚC LONG - BÌNH PHƯỚC | KH000185 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI THUẬN GIAO | KH000155 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-20; branch was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI THỦ DẦU MỘT | KH000152 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI TÂN UYÊN | KH000148 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2 and THỨ 5.
+- YAGAMI VĨNH TÂN | KH000156 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI ĐỒNG XOÀI | KH000171 | ACTIVE | SCHEDULED_TRUCK | THỨ 2 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 2.
+- YAGAMI BÀ RỊA - VŨNG TÀU | KH000063 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI LAGI | KH000119 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI LONG HẢI | KH000123 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI PHAN RANG | KH000140 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI PHAN THIẾT | KH000135 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI TRẢNG DÀI | KH000210 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI TUY HÒA | KH000208 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Warehouse ownership confirmed directly by user on 2026-06-20; branch was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI VŨNG TÀU | KH000132 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI XUYÊN MỘC | KH000106 | ACTIVE | SCHEDULED_TRUCK | THỨ 3 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 3.
+- YAGAMI BẾN LỨC | KH000168 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI MỸ HẠNH NAM | KH000194 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI QUẬN 12 | KH000120 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Warehouse ownership confirmed directly by user on 2026-06-20; branch was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI THỐNG NHẤT | KH000131 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI TRẢNG BOM | KH000157 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI ĐỊNH QUÁN | KH000196 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI ĐỨC HÒA | KH000109 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI ĐỨC TRỌNG | KH000203 | ACTIVE | SCHEDULED_TRUCK | THỨ 4 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 4.
+- YAGAMI LONG THÀNH | KH000128 | ACTIVE | SCHEDULED_TRUCK | THỨ 5 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 5.
+- YAGAMI NGÃI GIAO | KH000037 | ACTIVE | SCHEDULED_TRUCK | THỨ 5 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 5.
+- YAGAMI PHÚ MỸ | KH000116 | ACTIVE | SCHEDULED_TRUCK | THỨ 5 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 5.
+- YAGAMI TAM PHƯỚC | KH000192 | ACTIVE | SCHEDULED_TRUCK | THỨ 5 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 5.
+- YAGAMI ĐẠI PHƯỚC | KH000184 | ACTIVE | SCHEDULED_TRUCK | THỨ 5 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 5.
+- MONO TÂY NINH | KH000190 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Confirmed by Anh Khoa on 2026-07-10: MONO in Bình Dương route schedule is MONO TÂY NINH, KiotViet code KH000190. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI CỦ CHI | KH000130 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI DƯƠNG MINH CHÂU | KH000166 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI GÒ DẦU | KH000035 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI HOÀ THÀNH | KH000129 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI PHƯỚC ĐÔNG | KH000177 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI TRẢNG BÀNG | KH000092 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI TÂN BIÊN | KH000207 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI TÂN CHÂU - TN | KH000087 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI TÂY NINH | KH000072 | ACTIVE | SCHEDULED_TRUCK | THỨ 6 | Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6.
+- YAGAMI MŨI NÉ | KH000220 | ACTIVE | UNSPECIFIED | None | Warehouse ownership confirmed directly by user on 2026-06-23 after website-channel invoice review; customer was absent from the 2025 vehicle-route sheet.
+- YAGAMI THỦ ĐỨC | KH000007 | ACTIVE | UNSPECIFIED | None | Warehouse ownership confirmed directly by user on 2026-06-20; branch was absent from the 2025 vehicle-route sheet.
+
+## Excluded transfer / operation notes
+
+- KHO BD (HÀNG ĐÓNG) | THỨ 7 | INTER_WAREHOUSE_TRANSFER_NOT_BRANCH_ROUTE
+- KHO BD (SÚP) | CHỦ NHẬT | SOUP_TRANSFER_ONLY_NO_BRANCH_DELIVERY

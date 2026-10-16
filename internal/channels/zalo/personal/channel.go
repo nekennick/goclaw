@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -21,9 +22,11 @@ import (
 // WARNING: Zalo Personal is an unofficial, reverse-engineered integration. Account may be locked/banned.
 type Channel struct {
 	*channels.BaseChannel
-	config      config.ZaloPersonalConfig
-	typingCtrls sync.Map // threadID → *typing.Controller
-	replyCache  *replycontext.Cache
+	config       config.ZaloPersonalConfig
+	typingCtrls  sync.Map // threadID → *typing.Controller
+	replyCache   *replycontext.Cache
+	membersMu    sync.RWMutex
+	groupMembers map[string]groupMembersCacheEntry
 
 	mu       sync.RWMutex // protects sess and listener
 	sess     *protocol.Session
@@ -59,16 +62,25 @@ func New(cfg config.ZaloPersonalConfig, msgBus *bus.MessageBus, pairingSvc store
 	}
 
 	ch := &Channel{
-		BaseChannel: base,
-		config:      cfg,
-		replyCache:  replycontext.NewCache(replycontext.DefaultOptions()),
-		stopCh:      make(chan struct{}),
+		BaseChannel:  base,
+		config:       cfg,
+		replyCache:   replycontext.NewCache(replycontext.DefaultOptions()),
+		groupMembers: make(map[string]groupMembersCacheEntry),
+		stopCh:       make(chan struct{}),
 	}
 	ch.SetPairingService(pairingSvc)
 	ch.SetGroupHistory(channels.MakeHistory(channels.TypeZaloPersonal, pendingStore, base.TenantID()))
 	ch.SetHistoryLimit(historyLimit)
 	ch.SetRequireMention(requireMention)
 	return ch, nil
+}
+
+const groupMembersCacheTTL = 5 * time.Minute
+
+type groupMembersCacheEntry struct {
+	members   []protocol.GroupMemberInfo
+	fetchedAt time.Time
+	verified  bool
 }
 
 // BlockReplyEnabled returns the per-channel block_reply override (nil = inherit gateway default).
@@ -122,6 +134,28 @@ func (c *Channel) ListGroups(ctx context.Context) ([]channels.GroupInfo, error) 
 		c.MarkGroupApproved(g.GroupID)
 	}
 	return out, nil
+}
+
+// ListGroupMembers returns the verified current roster for a Zalo group. It
+// also refreshes the outbound mention cache and contact directory.
+func (c *Channel) ListGroupMembers(ctx context.Context, chatID string) ([]channels.GroupMember, error) {
+	sess := c.session()
+	if sess == nil {
+		return nil, fmt.Errorf("zalo_personal: not connected")
+	}
+	members, err := protocol.FetchGroupMembers(ctx, sess, chatID)
+	if err != nil {
+		return nil, err
+	}
+	c.cacheGroupMembers(chatID, members)
+	result := make([]channels.GroupMember, len(members))
+	for i, member := range members {
+		result[i] = channels.GroupMember{MemberID: member.UserID, Name: member.DisplayName}
+		if collector := c.ContactCollector(); collector != nil {
+			collector.EnsureContact(ctx, c.Type(), c.Name(), member.UserID, member.UserID, member.DisplayName, "", "group", "user", "", "")
+		}
+	}
+	return result, nil
 }
 
 // Start authenticates and begins listening for Zalo messages.
@@ -203,6 +237,9 @@ func (c *Channel) Stop(_ context.Context) error {
 	if c.replyCache != nil {
 		c.replyCache.Clear()
 	}
+	c.membersMu.Lock()
+	clear(c.groupMembers)
+	c.membersMu.Unlock()
 	if ln := c.getListener(); ln != nil {
 		ln.Stop()
 	}

@@ -30,6 +30,7 @@ type ZpwServiceMapV3 struct {
 	Group     []string `json:"group"`
 	File      []string `json:"file"`
 	Profile   []string `json:"profile"`
+	Reaction  []string `json:"reaction"`
 	GroupPoll []string `json:"group_poll"`
 	// Only fields needed for GoClaw; Zalo returns many more.
 }

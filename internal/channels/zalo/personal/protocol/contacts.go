@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 )
 
 // FriendInfo is a minimal friend/contact record for the picker UI.
@@ -23,6 +24,13 @@ type GroupListInfo struct {
 	Name        string `json:"name"`
 	Avatar      string `json:"avatar,omitempty"`
 	TotalMember int    `json:"totalMember"`
+}
+
+// GroupMemberInfo is a verified member record returned as part of Zalo group
+// information. It contains only what is needed for safe outbound mentions.
+type GroupMemberInfo struct {
+	UserID      string `json:"userId"`
+	DisplayName string `json:"displayName"`
 }
 
 // FetchFriends fetches the authenticated user's friend list from Zalo.
@@ -119,6 +127,207 @@ func FetchGroups(ctx context.Context, sess *Session) ([]GroupListInfo, error) {
 
 	sort.Slice(allGroups, func(i, j int) bool { return allGroups[i].Name < allGroups[j].Name })
 	return allGroups, nil
+}
+
+// FetchGroupMembers retrieves the current member roster from Zalo's group-info
+// response. Only UIDs returned by this response are eligible for native
+// mentions; no UID or member API shape is guessed.
+func FetchGroupMembers(ctx context.Context, sess *Session, groupID string) ([]GroupMemberInfo, error) {
+	if groupID == "" {
+		return nil, fmt.Errorf("zalo_personal: group ID cannot be empty")
+	}
+	baseURL := getServiceURL(sess, "group")
+	if baseURL == "" {
+		return nil, fmt.Errorf("zalo_personal: no group service URL")
+	}
+
+	gridVerJSON, err := json.Marshal(map[string]int{groupID: 0})
+	if err != nil {
+		return nil, err
+	}
+	encData, err := encryptPayload(sess, map[string]any{"gridVerMap": string(gridVerJSON)})
+	if err != nil {
+		return nil, fmt.Errorf("zalo_personal: encrypt group members payload: %w", err)
+	}
+	reqURL := makeURL(sess, baseURL+"/api/group/getmg-v2", nil, true)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, buildFormBody(map[string]string{"params": encData}))
+	if err != nil {
+		return nil, err
+	}
+	setDefaultHeaders(req, sess)
+
+	resp, err := sess.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("zalo_personal: fetch group members: %w", err)
+	}
+	defer resp.Body.Close()
+	var envelope Response[*string]
+	if err := readJSON(resp, &envelope); err != nil {
+		return nil, fmt.Errorf("zalo_personal: parse group members response: %w", err)
+	}
+	if envelope.ErrorCode != 0 {
+		return nil, fmt.Errorf("zalo_personal: group members error code %d: %s", envelope.ErrorCode, envelope.ErrorMessage)
+	}
+	if envelope.Data == nil {
+		return nil, nil
+	}
+	plain, err := decryptDataField(sess, *envelope.Data)
+	if err != nil {
+		return nil, fmt.Errorf("zalo_personal: decrypt group members: %w", err)
+	}
+	var result struct {
+		GridInfoMap map[string]struct {
+			MemberIDs   []string `json:"memberIds"`
+			MemVerList  []string `json:"memVerList"`
+			CurrentMems []struct {
+				ID       string `json:"id"`
+				DName    string `json:"dName"`
+				ZaloName string `json:"zaloName"`
+			} `json:"currentMems"`
+		} `json:"gridInfoMap"`
+	}
+	if err := json.Unmarshal(plain, &result); err != nil {
+		return nil, fmt.Errorf("zalo_personal: parse group members: %w", err)
+	}
+	info, ok := result.GridInfoMap[groupID]
+	if !ok {
+		return nil, nil
+	}
+	memberByID := make(map[string]string, len(info.MemberIDs)+len(info.MemVerList)+len(info.CurrentMems))
+	for _, member := range info.CurrentMems {
+		if member.ID == "" || (member.DName == "" && member.ZaloName == "") {
+			continue
+		}
+		name := member.DName
+		if name == "" {
+			name = member.ZaloName
+		}
+		memberByID[member.ID] = name
+	}
+	// Some groups return only memberIds or memVerList (without currentMems).
+	// Resolve only those server-provided UIDs; names are never inferred from an
+	// agent-supplied marker.
+	memberIDs := make([]string, 0, len(info.MemberIDs)+len(info.MemVerList))
+	seenIDs := make(map[string]struct{}, cap(memberIDs))
+	for _, ids := range [][]string{info.MemberIDs, info.MemVerList} {
+		for _, id := range ids {
+			if id == "" {
+				continue
+			}
+			if _, seen := seenIDs[id]; seen {
+				continue
+			}
+			seenIDs[id] = struct{}{}
+			memberIDs = append(memberIDs, id)
+		}
+	}
+	missingIDs := make([]string, 0, len(memberIDs))
+	for _, id := range memberIDs {
+		if _, known := memberByID[id]; !known {
+			missingIDs = append(missingIDs, id)
+		}
+	}
+	if len(missingIDs) > 0 {
+		profiles, err := fetchGroupMemberProfiles(ctx, sess, missingIDs)
+		if err != nil {
+			return nil, err
+		}
+		for id, name := range profiles {
+			if name != "" {
+				memberByID[id] = name
+			}
+		}
+	}
+	members := make([]GroupMemberInfo, 0, len(memberByID))
+	for _, id := range memberIDs {
+		if name := memberByID[id]; name != "" {
+			members = append(members, GroupMemberInfo{UserID: id, DisplayName: name})
+			delete(memberByID, id)
+		}
+	}
+	// currentMems is still useful on responses that omit memberIds.
+	for id, name := range memberByID {
+		members = append(members, GroupMemberInfo{UserID: id, DisplayName: name})
+	}
+	return members, nil
+}
+
+// fetchGroupMemberProfiles resolves names only for UIDs already returned by a
+// group's memberIds/memVerList fields. The endpoint and payload mirror zca-js
+// GetGroupMembersInfo; this is not a guessed member API.
+func fetchGroupMemberProfiles(ctx context.Context, sess *Session, memberIDs []string) (map[string]string, error) {
+	baseURL := getServiceURL(sess, "profile")
+	if baseURL == "" {
+		return nil, fmt.Errorf("zalo_personal: no profile service URL")
+	}
+
+	profiles := make(map[string]string, len(memberIDs))
+	const batchSize = 50
+	for start := 0; start < len(memberIDs); start += batchSize {
+		end := min(start+batchSize, len(memberIDs))
+		versions := make([]string, 0, end-start)
+		for _, id := range memberIDs[start:end] {
+			version := id
+			if !strings.Contains(version, "_") {
+				version += "_0"
+			}
+			versions = append(versions, version)
+		}
+		encData, err := encryptPayload(sess, map[string]any{"friend_pversion_map": versions})
+		if err != nil {
+			return nil, fmt.Errorf("zalo_personal: encrypt group member profiles payload: %w", err)
+		}
+		reqURL := makeURL(sess, baseURL+"/api/social/group/members", map[string]any{"params": encData}, true)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		setDefaultHeaders(req, sess)
+		resp, err := sess.Client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("zalo_personal: fetch group member profiles: %w", err)
+		}
+		var envelope Response[*string]
+		readErr := readJSON(resp, &envelope)
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, fmt.Errorf("zalo_personal: parse group member profiles response: %w", readErr)
+		}
+		if envelope.ErrorCode != 0 {
+			return nil, fmt.Errorf("zalo_personal: group member profiles error code %d: %s", envelope.ErrorCode, envelope.ErrorMessage)
+		}
+		if envelope.Data == nil {
+			continue
+		}
+		plain, err := decryptDataField(sess, *envelope.Data)
+		if err != nil {
+			return nil, fmt.Errorf("zalo_personal: decrypt group member profiles: %w", err)
+		}
+		var result struct {
+			Profiles map[string]struct {
+				UserID      string `json:"id"`
+				DisplayName string `json:"displayName"`
+				ZaloName    string `json:"zaloName"`
+			} `json:"profiles"`
+		}
+		if err := json.Unmarshal(plain, &result); err != nil {
+			return nil, fmt.Errorf("zalo_personal: parse group member profiles: %w", err)
+		}
+		for rawID, profile := range result.Profiles {
+			id := profile.UserID
+			if id == "" {
+				id = strings.TrimSuffix(rawID, "_0")
+			}
+			name := profile.DisplayName
+			if name == "" {
+				name = profile.ZaloName
+			}
+			if id != "" && name != "" {
+				profiles[id] = name
+			}
+		}
+	}
+	return profiles, nil
 }
 
 // fetchGroupIDs gets group ID -> version map from group_poll service.

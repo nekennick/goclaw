@@ -216,7 +216,7 @@ var coreToolSummaries = map[string]string{
 	"create_audio":           "Generate music or sound effects from text descriptions using AI",
 	"knowledge_graph_search": "Find people, projects, and their connections — use for relationship questions (who works with whom, project dependencies) that memory_search may miss",
 	"team_tasks":             "Team task board — track progress, manage dependencies (spawn auto-creates delegation tasks)",
-	"list_group_members":     "List all members of the current group chat (Feishu/Lark only)",
+	"list_group_members":     "List all members of the current group chat (supported: Feishu/Lark and Zalo Personal)",
 	"zalo_list_groups":       "List all Zalo groups the account belongs to (group_id + name) — resolve a group's real ID before sending/forwarding to it by name (Zalo only)",
 	"create_forum_topic":     "Create a forum topic in a Telegram supergroup",
 	"delegate":               "Delegate a task to a linked agent (requires agent_links). See ## Delegation Targets for available agents",
@@ -272,6 +272,15 @@ func BuildSystemPrompt(cfg SystemPromptConfig) string {
 				fmt.Sprintf("  kind: %s", kind),
 				"</current_reply_target>",
 				"When using the message tool, omit `target` to reply here. Set `target` only when forwarding to a different chat per explicit user request (also requires `forward=true` + `forward_reason`).",
+				"",
+			)
+		}
+		if cfg.ChannelType == "zalo_personal" && cfg.PeerKind == "group" {
+			lines = append(lines,
+				"## Zalo Personal Native Mentions",
+				"To natively @mention a verified group member in text sent through the message tool, write exactly @[UID|Display Name], for example @[123456|Nguyen Van A]. Do not send @UID by itself: it is plain text and does not notify the member.",
+				"Obtain UID and name by calling list_group_members in the current group. Use only a UID returned for this group; never guess IDs, never use @all, and do not tag when the returned name is ambiguous.",
+				"You may use multiple @[UID|Display Name] tokens in one message. Keep these tokens in the message text; the channel converts them to native Zalo mentions before sending.",
 				"",
 			)
 		}

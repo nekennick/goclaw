@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
+	"strings"
+
 	"github.com/nextlevelbuilder/goclaw/internal/bus"
-	"github.com/nextlevelbuilder/goclaw/internal/channels"
 	"github.com/nextlevelbuilder/goclaw/internal/channels/typing"
 	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo"
 	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo/personal/protocol"
@@ -21,8 +23,6 @@ func (c *Channel) Send(ctx context.Context, msg bus.OutboundMessage) error {
 	}
 
 	// Strip markdown — Zalo does not support any markup rendering.
-	msg.Content = zalo.StripMarkdown(msg.Content)
-
 	// Stop typing indicator before sending response
 	if ctrl, ok := c.typingCtrls.LoadAndDelete(msg.ChatID); ok {
 		ctrl.(*typing.Controller).Stop()
@@ -85,10 +85,59 @@ func (c *Channel) sendFile(ctx context.Context, sess *protocol.Session, chatID s
 }
 
 func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, chatID string, threadType protocol.ThreadType, text string) error {
-	for _, chunk := range channels.ChunkMarkdown(text, maxTextLength) {
-		if _, err := protocol.SendMessage(ctx, sess, chatID, threadType, chunk); err != nil {
+	plainText, markdownStyles := stripMarkdownWithStyles(text)
+	resolved := mentionResolution{text: plainText, styles: markdownStyles}
+	if threadType == protocol.ThreadTypeGroup {
+		resolved = c.resolveGroupMentions(ctx, chatID, plainText)
+		resolved.styles = append(resolved.styles, markdownStyles...)
+	}
+	resolved = addZaloReportStyles(resolved)
+	for _, chunk := range splitMentionResolution(resolved, maxTextLength) {
+		messageID, err := protocol.SendMessageWithFormatting(ctx, sess, chatID, threadType, chunk.text, chunk.mentions, chunk.styles)
+		if err != nil {
 			return err
+		}
+		if len(chunk.mentions) > 0 {
+			slog.Info("zalo_personal: native mention text sent",
+				"group_id", chatID,
+				"mention_count", len(chunk.mentions),
+				"message_id", messageID,
+			)
 		}
 	}
 	return nil
+}
+
+var nativeBoldMarkdown = regexp.MustCompile(`(?s)(?:\*\*(.+?)\*\*|__(.+?)__)`)
+
+// stripMarkdownWithStyles keeps the visible text clean while preserving the
+// emphasis requested by the model as native Zalo styles.
+func stripMarkdownWithStyles(text string) (string, []protocol.TextStyle) {
+	plain := zalo.StripMarkdown(text)
+	if plain == "" {
+		return plain, nil
+	}
+
+	styles := make([]protocol.TextStyle, 0)
+	searchFrom := 0
+	for _, match := range nativeBoldMarkdown.FindAllStringSubmatch(text, -1) {
+		content := match[1]
+		if content == "" {
+			content = match[2]
+		}
+		if content == "" {
+			continue
+		}
+		index := strings.Index(plain[searchFrom:], content)
+		if index < 0 {
+			continue
+		}
+		index += searchFrom
+		styles = append(styles,
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
+		)
+		searchFrom = index + len(content)
+	}
+	return plain, styles
 }

@@ -12,6 +12,27 @@ import (
 // SendMessage sends a text message to a user or group.
 // threadID: user UID (DM) or group ID (group).
 func SendMessage(ctx context.Context, sess *Session, threadID string, threadType ThreadType, text string) (string, error) {
+	return SendMessageWithMentions(ctx, sess, threadID, threadType, text, nil)
+}
+
+// SendMessageWithMentions sends a text message and, for group messages only,
+// emits native Zalo mentions. Mention metadata is ignored for DMs because Zalo
+// accepts native mentions through a group-only endpoint.
+func SendMessageWithMentions(ctx context.Context, sess *Session, threadID string, threadType ThreadType, text string, mentions []*TMention) (string, error) {
+	return SendMessageWithFormatting(ctx, sess, threadID, threadType, text, mentions, nil)
+}
+
+// TextStyle applies a native Zalo text style. Start and Len are UTF-16 code
+// units, matching Zalo Web's JavaScript string offsets.
+type TextStyle struct {
+	Start int    `json:"start"`
+	Len   int    `json:"len"`
+	Style string `json:"st"`
+}
+
+// SendMessageWithFormatting sends text with optional native mentions and rich
+// text styles. Zalo receives styles in the textProperties JSON string.
+func SendMessageWithFormatting(ctx context.Context, sess *Session, threadID string, threadType ThreadType, text string, mentions []*TMention, styles []TextStyle) (string, error) {
 	if text == "" {
 		return "", fmt.Errorf("zalo_personal: message text cannot be empty")
 	}
@@ -37,9 +58,24 @@ func SendMessage(ctx context.Context, sess *Session, threadID string, threadType
 	if threadType == ThreadTypeGroup {
 		payload["grid"] = threadID
 		payload["visibility"] = 0
+		if len(mentions) > 0 {
+			mentionInfo, err := json.Marshal(mentions)
+			if err != nil {
+				return "", fmt.Errorf("zalo_personal: encode mention info: %w", err)
+			}
+			payload["mentionInfo"] = string(mentionInfo)
+			apiPath = "/api/group/mention"
+		}
 	} else {
 		payload["toid"] = threadID
 		payload["imei"] = sess.IMEI
+	}
+	if len(styles) > 0 {
+		textProperties, err := json.Marshal(map[string]any{"styles": styles, "ver": 0})
+		if err != nil {
+			return "", fmt.Errorf("zalo_personal: encode text properties: %w", err)
+		}
+		payload["textProperties"] = string(textProperties)
 	}
 
 	// Encrypt payload with session secret key
@@ -159,6 +195,8 @@ func getServiceURL(sess *Session, service string) string {
 		urls = sess.LoginInfo.ZpwServiceMapV3.File
 	case "profile":
 		urls = sess.LoginInfo.ZpwServiceMapV3.Profile
+	case "reaction":
+		urls = sess.LoginInfo.ZpwServiceMapV3.Reaction
 	case "group_poll":
 		urls = sess.LoginInfo.ZpwServiceMapV3.GroupPoll
 	}

@@ -1,0 +1,428 @@
+{
+  "now": "30/07/2026 16:03:43",
+  "syncLocal": "30/07/2026 16:01:50",
+  "day": "THỨ 5",
+  "period": "27/07/2026 00:00 - 30/07/2026 16:03",
+  "kb_version": 9,
+  "kb_verifiedAt": "2026-07-25",
+  "total_sched": 19,
+  "done": [
+    {
+      "branch": "YAGAMI THỐT NỐT",
+      "customerCode": "KH000021",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI THỐT NỐT",
+      "code": "DH032439",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "45.841.500",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 00:00",
+      "invoiceCodes": [
+        "HD045252"
+      ]
+    },
+    {
+      "branch": "YAGAMI LẤP VÒ",
+      "customerCode": "KH000024",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI LẤP VÒ",
+      "code": "DH032475",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "32.833.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 19:50",
+      "invoiceCodes": [
+        "HD045262"
+      ]
+    },
+    {
+      "branch": "YAGAMI CỜ ĐỎ",
+      "customerCode": "KH000044",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI CỜ ĐỎ",
+      "code": "DH032440",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "41.789.700",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 00:27",
+      "invoiceCodes": [
+        "HD045238"
+      ]
+    },
+    {
+      "branch": "YAGAMI VỊ THANH",
+      "customerCode": "KH000051",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI VỊ THANH",
+      "code": "DH032473",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "34.863.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 19:32",
+      "invoiceCodes": [
+        "HD045260"
+      ]
+    },
+    {
+      "branch": "YAGAMI THỚI LAI",
+      "customerCode": "KH000070",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI THỚI LAI",
+      "code": "DH032441",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "49.909.200",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 00:47",
+      "invoiceCodes": [
+        "HD045248"
+      ]
+    },
+    {
+      "branch": "YAGAMI MỘT NGÀN",
+      "customerCode": "KH000149",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI MỘT NGÀN",
+      "code": "DH032499",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "19.152.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-30 00:00",
+      "invoiceCodes": [
+        "HD045271"
+      ]
+    },
+    {
+      "branch": "YAGAMI TRUNG AN",
+      "customerCode": "KH000154",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI TRUNG AN",
+      "code": "DH032458",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "39.354.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 13:06",
+      "invoiceCodes": [
+        "HD045253.01"
+      ]
+    },
+    {
+      "branch": "YAGAMI Ô MÔN",
+      "customerCode": "KH000163",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI Ô MÔN",
+      "code": "DH032487",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "59.223.200",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 22:12",
+      "invoiceCodes": [
+        "HD045265.01"
+      ]
+    },
+    {
+      "branch": "YAGAMI NÀNG MAU",
+      "customerCode": "KH000093",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI NÀNG MAU",
+      "code": "DH032460",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "37.769.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 13:38",
+      "invoiceCodes": [
+        "HD045237"
+      ]
+    },
+    {
+      "branch": "YAGAMI PHONG ĐIỀN",
+      "customerCode": "KH000108",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI PHONG ĐIỀN",
+      "code": "DH032442",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "38.046.600",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 01:06",
+      "invoiceCodes": [
+        "HD045241"
+      ]
+    },
+    {
+      "branch": "YAGAMI TIỂU CẦN",
+      "customerCode": "KH000086",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI TIỂU CẦN",
+      "code": "DH032435",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "55.295.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 00:00",
+      "invoiceCodes": [
+        "HD045246"
+      ]
+    },
+    {
+      "branch": "YAGAMI TRÀ ÔN",
+      "customerCode": "KH000047",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI TRÀ ÔN",
+      "code": "DH032456",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "28.720.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 12:28",
+      "invoiceCodes": [
+        "HD045250"
+      ]
+    },
+    {
+      "branch": "Kho Tổng Trà Vinh",
+      "customerCode": "KH000068",
+      "routeWarehouse": "CAO_LANH",
+      "name": "Kho Tổng Trà Vinh",
+      "code": "DH032463",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "189.902.400",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 14:25",
+      "invoiceCodes": [
+        "HD045256"
+      ]
+    },
+    {
+      "branch": "YAGAMI TP.CẦN THƠ",
+      "customerCode": "KH000204",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI TP.CẦN THƠ",
+      "code": "DH032453",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "120.330.400",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 11:17",
+      "invoiceCodes": [
+        "HD045251.02"
+      ]
+    },
+    {
+      "branch": "YAGAMI NGÃI GIAO",
+      "customerCode": "KH000037",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI NGÃI GIAO",
+      "code": "DH032515",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "965.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-30 15:20",
+      "invoiceCodes": [
+        "HD045269"
+      ]
+    },
+    {
+      "branch": "YAGAMI PHÚ MỸ",
+      "customerCode": "KH000116",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI PHÚ MỸ",
+      "code": "DH032481",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "43.379.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 21:37",
+      "invoiceCodes": [
+        "HD045261"
+      ]
+    },
+    {
+      "branch": "YAGAMI ĐẠI PHƯỚC",
+      "customerCode": "KH000184",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI ĐẠI PHƯỚC",
+      "code": "DH032477",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "46.409.500",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 20:32",
+      "invoiceCodes": [
+        "HD045244"
+      ]
+    },
+    {
+      "branch": "YAGAMI LONG THÀNH",
+      "customerCode": "KH000128",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI LONG THÀNH",
+      "code": "DH032459",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "40.642.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 13:36",
+      "invoiceCodes": [
+        "HD045257"
+      ]
+    }
+  ],
+  "pending": [
+    {
+      "branch": "YAGAMI TAM PHƯỚC",
+      "customerCode": "KH000192",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI TAM PHƯỚC",
+      "code": "DH032494",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "20.257.120",
+      "status": "Phiếu tạm",
+      "purchaseDate": "2026-07-30 00:21",
+      "invoiceCodes": []
+    }
+  ],
+  "missing": [],
+  "reconcile": [],
+  "old_notes": [
+    {
+      "branch": "YAGAMI MỘT NGÀN",
+      "customerCode": "KH000149",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI MỘT NGÀN",
+      "code": "DH032488",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "750.000",
+      "status": "Đã hủy",
+      "purchaseDate": "2026-07-29 22:16",
+      "invoiceCodes": []
+    },
+    {
+      "branch": "YAGAMI MỘT NGÀN",
+      "customerCode": "KH000149",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI MỘT NGÀN",
+      "code": "DH032457",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "18.386.500",
+      "status": "Đã hủy",
+      "purchaseDate": "2026-07-29 12:28",
+      "invoiceCodes": []
+    },
+    {
+      "branch": "YAGAMI TRUNG AN",
+      "customerCode": "KH000154",
+      "routeWarehouse": "CAO_LANH",
+      "name": "YAGAMI TRUNG AN",
+      "code": "DH032513",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "840.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-30 14:59",
+      "invoiceCodes": []
+    },
+    {
+      "branch": "YAGAMI NGÃI GIAO",
+      "customerCode": "KH000037",
+      "routeWarehouse": "BINH_DUONG",
+      "name": "YAGAMI NGÃI GIAO",
+      "code": "DH032491",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "7.630.000",
+      "status": "Hoàn thành",
+      "purchaseDate": "2026-07-29 23:05",
+      "invoiceCodes": [
+        "HD045263"
+      ]
+    }
+  ],
+  "summary_by_wh": {
+    "Tổng kho YAGAMI": {
+      "scheduled": 14,
+      "done": 14,
+      "pending": 0,
+      "missing": 0,
+      "reconcile_branches": 0,
+      "reconcile_DH": 0
+    },
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "scheduled": 5,
+      "done": 4,
+      "pending": 1,
+      "missing": 0,
+      "reconcile_branches": 0,
+      "reconcile_DH": 0
+    }
+  },
+  "inventory": [
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "MYG",
+      "name": "Mì Yagami",
+      "onHand": 1251.0,
+      "reserved": 221.0,
+      "available": 1030.0
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "MYG",
+      "name": "Mì Yagami",
+      "onHand": 494.0,
+      "reserved": 66.0,
+      "available": 428.0
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SLTL",
+      "name": "Súp Lẩu Thái Lớn (36 lít)",
+      "onHand": 513.0,
+      "reserved": 39.0,
+      "available": 474.0
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SLTL",
+      "name": "Súp Lẩu Thái Lớn (36 lít)",
+      "onHand": 409.0,
+      "reserved": 20.0,
+      "available": 389.0
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SML",
+      "name": "Súp Mì Lớn (52 lít)",
+      "onHand": 1296.0,
+      "reserved": 227.0,
+      "available": 1069.0
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SML",
+      "name": "Súp Mì Lớn (52 lít)",
+      "onHand": 1074.0,
+      "reserved": 45.0,
+      "available": 1029.0
+    },
+    {
+      "warehouse": "Tổng kho YAGAMI",
+      "code": "SMN",
+      "name": "Súp Mì Nhỏ (26 lít)",
+      "onHand": 484.0,
+      "reserved": 10.0,
+      "available": 474.0
+    },
+    {
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "code": "SMN",
+      "name": "Súp Mì Nhỏ (26 lít)",
+      "onHand": 641.0,
+      "reserved": 0.0,
+      "available": 641.0
+    }
+  ],
+  "need": {
+    "KHO YAGAMI BÌNH DƯƠNG": {
+      "MYG": 52.0,
+      "SLTL": 10.0,
+      "SML": 50.0
+    },
+    "Tổng kho YAGAMI": {
+      "SLTL": 60.0,
+      "MYG": 392.0,
+      "SML": 278.0,
+      "SMN": 32.0
+    }
+  }
+}

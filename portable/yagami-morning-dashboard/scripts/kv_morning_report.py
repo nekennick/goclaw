@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+import csv, datetime as dt, gzip, json, time, urllib.parse, urllib.request
+from pathlib import Path
+ROOT=Path('.').resolve(); DATA=ROOT/'data/kiotviet'; TZ=dt.timezone(dt.timedelta(hours=7))
+WAREHOUSES=['Tổng kho YAGAMI','KHO YAGAMI BÌNH DƯƠNG']; CODES=['SML','SMN','SLTL','MYG']
+def env():
+ d={}
+ for l in (ROOT/'config/.env.kiotviet').read_text(encoding='utf-8').splitlines():
+  l=l.strip()
+  if l and not l.startswith('#') and '=' in l:
+   k,v=l.split('=',1); d[k.strip()]=v.strip().strip('"').strip("'")
+ return d
+def hj(req,to=90):
+ with urllib.request.urlopen(req,timeout=to) as r: return json.loads(r.read().decode('utf-8'))
+def tok(e):
+ data=urllib.parse.urlencode({'scopes':e.get('KIOTVIET_SCOPE','PublicApi.Access'),'grant_type':'client_credentials','client_id':e['KIOTVIET_CLIENT_ID'],'client_secret':e['KIOTVIET_CLIENT_SECRET']}).encode()
+ return hj(urllib.request.Request(e.get('KIOTVIET_AUTH_URL','https://id.kiotviet.vn/connect/token'),data=data,headers={'Content-Type':'application/x-www-form-urlencoded'},method='POST'),30)['access_token']
+def api(e,t,path,params):
+ url=e.get('KIOTVIET_API_URL','https://public.kiotapi.com').rstrip()+path
+ if params: url+='?'+urllib.parse.urlencode(params)
+ return hj(urllib.request.Request(url,headers={'Authorization':'Bearer '+t,'Retailer':e['KIOTVIET_RETAILER']}),90)
+def all_(e,t,path,params,maxp=None):
+ out=[]; cur=0; total=None; ps=int(params.get('pageSize',100)); p=0
+ while True:
+  q=dict(params); q['currentItem']=cur; o=api(e,t,path,q); arr=o.get('data',[]) if isinstance(o,dict) else []
+  total=o.get('total') if total is None and isinstance(o,dict) else total
+  if not arr: break
+  out+=arr; cur+=len(arr); p+=1
+  if (total is not None and cur>=int(total)) or len(arr)<ps or (maxp and p>=maxp): break
+  time.sleep(.12)
+ return out,total
+def flat(x):
+ r={}
+ for k,v in x.items(): r[k]=json.dumps(v,ensure_ascii=False) if isinstance(v,(list,dict)) else v
+ return r
+def wc(path,rows):
+ path.parent.mkdir(parents=True,exist_ok=True); fs=[]
+ for r in rows:
+  for k in r:
+   if k not in fs: fs.append(k)
+ with path.open('w',encoding='utf-8',newline='') as f:
+  w=csv.DictWriter(f,fieldnames=fs,extrasaction='ignore'); w.writeheader(); w.writerows(rows)
+def raw(name,items,stamp,synced):
+ d=DATA/'raw'/dt.datetime.now(TZ).strftime('%Y-%m-%d'); d.mkdir(parents=True,exist_ok=True)
+ with gzip.open(d/f'{name}-{stamp}.jsonl.gz','wt',encoding='utf-8') as f:
+  for it in items: f.write(json.dumps({'source':'KiotViet','endpoint':name,'syncId':stamp,'syncedAt':synced,'data':it},ensure_ascii=False)+'\n')
+def parse_local(s): return dt.datetime.fromisoformat(s[:19]) if s else None
+def money(x): return f"{float(x or 0):,.0f}".replace(',','.')
+def num(x):
+ f=float(x or 0); return str(int(f)) if abs(f-int(f))<1e-9 else (f"{f:,.2f}".replace(',','X').replace('.',',').replace('X','.'))
+def strip_name(n):
+ n=str(n or '').strip()
+ for pref in ['YAGAMI ','HAKIMI ','CHIBA ']:
+  if n.upper().startswith(pref): return n[len(pref):]
+ return n
+def day_label(now): return ['thứ hai','thứ ba','thứ tư','thứ năm','thứ sáu','thứ bảy','chủ nhật'][now.weekday()]
+def day_kb(now): return ['THỨ 2','THỨ 3','THỨ 4','THỨ 5','THỨ 6','THỨ 7','CHỦ NHẬT'][now.weekday()]
+def wh_display(kbwh): return 'KHO YAGAMI BÌNH DƯƠNG' if kbwh=='BINH_DUONG' else 'Tổng kho YAGAMI'
+def sync_all(now):
+ e=env(); t=tok(e); stamp=dt.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ'); synced=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(); meta={'syncId':stamp,'startedAt':synced,'entities':{},'errors':[]}
+ products=[]; orders=[]; invoices=[]
+ for n,p,pa in [('branches','/branches',{'pageSize':100}),('customers','/customers',{'pageSize':100}),('products','/products',{'pageSize':100,'includeInventory':'true'}),('orders','/orders',{'pageSize':100,'orderBy':'purchaseDate','orderDirection':'Desc','status':1})]:
+  its,total=all_(e,t,p,pa); raw(n,its,stamp,synced); wc(DATA/f'normalized/{n}.csv',[flat(x) for x in its]); meta['entities'][n]={'ok':True,'count':len(its),'apiTotal':total}
+  if n=='products': products=its
+  elif n=='orders': orders=its
+  elif n=='invoices': invoices=its
+ inv=[]
+ for p in products:
+  for i in p.get('inventories') or []:
+   r={k:i.get(k) for k in ['productId','productCode','productName','branchId','branchName','cost','onHand','reserved','actualReserved','onOrder','isActive']}; r['available']=(r.get('onHand') or 0)-(r.get('reserved') or 0); r['syncedAt']=synced; inv.append(r)
+ wc(DATA/'normalized/inventory-current.csv',inv); meta['finishedAt']=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(); (DATA/'metadata').mkdir(parents=True,exist_ok=True); (DATA/'metadata/latest-sync.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding='utf-8')
+ return synced,inv,orders,invoices
+def main():
+ now=dt.datetime.now(TZ)
+ try:
+  synced,inv,orders,invoices=sync_all(now); sync_local=dt.datetime.fromisoformat(synced).astimezone(TZ)
+ except Exception as ex:
+  msg=f"📌 Báo cáo sáng hôm nay\n{day_label(now).capitalize()}, {now.strftime('%d/%m/%Y')}\n" + (f"Báo cáo bù theo dữ liệu hiện tại lúc {now.strftime('%H:%M')}\n" if now.strftime('%H%M')>'0800' else '') + f"\nLỖI DỮ LIỆU: Chưa đồng bộ được KiotViet mới nên em không gửi báo cáo như số chắc chắn.\nChi tiết lỗi: {ex}"
+  Path('outputs').mkdir(exist_ok=True); Path('outputs/morning-report.txt').write_text(msg,encoding='utf-8'); print(msg); return
+ cutoff=now.replace(tzinfo=None); kb=json.load(open(ROOT/'data/yagami-knowledge-base/yagami-branch-warehouse-map.json',encoding='utf-8'))
+ dkb=day_kb(now); sched=[b for b in kb['branches'] if b.get('status')=='ACTIVE' and b.get('day')==dkb and b.get('customerCode')]; sc={b['customerCode']:b for b in sched}
+ external=[b for b in kb['branches'] if b.get('status')=='ACTIVE' and b.get('customerCode') and (b.get('day')=='GỬI XE NGOÀI' or b.get('routeType')=='EXTERNAL_VEHICLE')]; exc={b['customerCode']:b for b in external}
+ temp=[o for o in orders if o.get('statusValue')=='Phiếu tạm' and parse_local(o.get('purchaseDate')) and parse_local(o.get('purchaseDate'))<=cutoff]
+ in_sched=[o for o in temp if o.get('customerCode') in sc]
+ ext_today=[o for o in temp if o.get('customerCode') in exc and o.get('customerCode') not in sc]
+ out_sched=[o for o in temp if o.get('customerCode') not in sc and o.get('customerCode') not in exc]
+ branch_with=set(o.get('customerCode') for o in in_sched); miss=[b for b in sched if b['customerCode'] not in branch_with]
+ by_wh={w:[] for w in WAREHOUSES}; miss_wh={w:[] for w in WAREHOUSES}; out_wh={w:[] for w in WAREHOUSES}; ext_wh={w:[] for w in WAREHOUSES}
+ for o in in_sched:
+  if o.get('branchName') in by_wh: by_wh[o.get('branchName')].append(o)
+ for b in miss: miss_wh[wh_display(b.get('warehouse'))].append(b)
+ for o in out_sched:
+  if o.get('branchName') in out_wh: out_wh[o.get('branchName')].append(o)
+ for o in ext_today:
+  b=exc.get(o.get('customerCode')) or {}; w=wh_display(b.get('warehouse'))
+  if w in ext_wh: ext_wh[w].append(o)
+ need={w:{c:0 for c in CODES} for w in WAREHOUSES}
+ for o in in_sched + ext_today:
+  if o in ext_today:
+   b=exc.get(o.get('customerCode')) or {}; w=wh_display(b.get('warehouse'))
+  else:
+   w=o.get('branchName')
+  if w not in need: continue
+  for it in o.get('orderDetails') or []:
+   c=str(it.get('productCode','')).upper()
+   if c in CODES: need[w][c]+=float(it.get('quantity') or 0)
+ invmap={w:{c:{'onHand':0,'reserved':0,'available':0} for c in CODES} for w in WAREHOUSES}
+ for r in inv:
+  w=r.get('branchName'); c=str(r.get('productCode','')).upper()
+  if w in invmap and c in CODES: invmap[w][c]={'onHand':float(r.get('onHand') or 0),'reserved':float(r.get('reserved') or 0),'available':float(r.get('available') or 0)}
+ warn=[]
+ for w in WAREHOUSES:
+  for c in CODES:
+   shortage=need[w][c]-invmap[w][c]['available']
+   if shortage>0: warn.append(f"{w}: {c} thiếu {num(shortage)}")
+ if miss: warn.append(f"{len(miss)} chi nhánh chưa đặt")
+ mainwarn='; '.join(warn) if warn else 'Không có cảnh báo chính'; is_late=now.strftime('%H%M')>'0800'
+ lines=['📌 Báo cáo sáng hôm nay',f"{day_label(now).capitalize()}, {now.strftime('%d/%m/%Y')}"]
+ if is_late: lines.append(f"Báo cáo bù theo dữ liệu hiện tại lúc {now.strftime('%H:%M')}")
+ lines += [f"Mốc dữ liệu đơn hàng: tất cả phiếu tạm tính đến {now.strftime('%H:%M')}",f"Dữ liệu tồn kho lấy từ KiotViet đồng bộ lúc {sync_local.strftime('%H:%M')}",'✅ Kết luận nhanh:',f"• Lịch {day_label(now)}: {len(sched)} chi nhánh",f"• Chi nhánh đã đặt: {len(branch_with)} chi nhánh / {len(in_sched)} phiếu / {money(sum(float(o.get('total') or 0) for o in in_sched))}đ",f"• Chi nhánh chưa đặt: {len(miss)} chi nhánh",f"• Gửi xe ngoài hôm nay: {len(ext_today)} phiếu / {money(sum(float(o.get('total') or 0) for o in ext_today))}đ",f"• Đơn ngoài lịch khác: {len(out_sched)} phiếu / {money(sum(float(o.get('total') or 0) for o in out_sched))}đ",f"• Cảnh báo chính: {mainwarn}",'','🚚 Đóng hàng theo lịch','']
+ for w in WAREHOUSES:
+  arr=by_wh[w]; bcnt=len(set(o.get('customerCode') for o in arr)); total=sum(float(o.get('total') or 0) for o in arr); names=[]; seen=set()
+  for o in arr:
+   cc=o.get('customerCode')
+   if cc not in seen: seen.add(cc); names.append(strip_name(o.get('customerName')))
+  lines += [f"🏭 {w}:",f"• {bcnt} chi nhánh / {len(arr)} phiếu / {money(total)}đ",'• '+(', '.join(names) if names else 'không có'),'']
+ lines += ['📍 Chi nhánh chưa đặt:']
+ for w in WAREHOUSES: lines.append(f"• {w}: {', '.join(strip_name(b.get('canonicalName')) for b in miss_wh[w]) if miss_wh[w] else 'không có'}")
+ lines += ['', '🚛 Gửi xe ngoài hôm nay:']
+ for w in WAREHOUSES:
+  arr=ext_wh[w]; names=[]; seen=set()
+  for o in arr:
+   cc=o.get('customerCode')
+   if cc not in seen:
+    seen.add(cc); b=exc.get(cc) or {}; names.append(b.get('canonicalName') or o.get('customerName') or '')
+  lines.append(f"• {w}: {len(set(o.get('customerCode') for o in arr))} chi nhánh / {len(arr)} phiếu / {money(sum(float(o.get('total') or 0) for o in arr))}đ — {', '.join(names) if names else 'không có'}")
+ lines += ['', '🧾 Đơn ngoài lịch khác:']
+ for w in WAREHOUSES:
+  arr=out_wh[w]; lines.append(f"• {w}: {len(arr)} phiếu / {money(sum(float(o.get('total') or 0) for o in arr))}đ")
+ lines += ['', '📦 4 mã siết tồn — đơn theo lịch + gửi xe ngoài']
+ for w in WAREHOUSES:
+  lines.append(f"🏭 {w}:")
+  for c in CODES:
+   im=invmap[w][c]; shortage=need[w][c]-im['available']; extra=' ⚠️ thiếu khả dụng' if shortage>0 else ''
+   lines.append(f"• {c}: cần {num(need[w][c])} | tồn {num(im['onHand'])} | giữ {num(im['reserved'])} | khả dụng {num(im['available'])}{extra}")
+  lines.append('')
+ lines.append('⚠️ Cần theo dõi:')
+ if warn:
+  for w in warn: lines.append(f"• {w}")
+ else: lines.append('• Không có cảnh báo chính')
+ text='\n'.join(lines).rstrip()+"\n"; Path('outputs').mkdir(exist_ok=True); Path('outputs/morning-report.txt').write_text(text,encoding='utf-8'); print(text)
+if __name__=='__main__': main()

@@ -1,0 +1,42 @@
+Báo cáo chiều kiểm tra xử lý đơn — thứ tư, 29/07/2026
+Đồng bộ KiotViet: 16:05:11 | Kiểm tra: 16:05:10
+Kỳ giao tuần hiện tại: 27/07 00:00–29/07 16:05 | KB v9 (2026-07-25)
+
+Số chính:
+- Tổng chi nhánh theo lịch hôm nay: 30
+- Đã xử lý xong: 29/30 chi nhánh
+- Còn phiếu tạm đúng kỳ: 0 chi nhánh
+- Chưa có đơn đúng kỳ: 1 chi nhánh
+- Cần đối soát: 7 chi nhánh/DH
+
+Tách theo kho:
+- Tổng kho YAGAMI: lịch 22 | xong 21 | phiếu tạm 0 | chưa có đơn 1 | đối soát 4
+- KHO YAGAMI BÌNH DƯƠNG: lịch 8 | xong 8 | phiếu tạm 0 | chưa có đơn 0 | đối soát 3
+
+4 mã siết tồn — tồn mới từ products.inventories:
+Tổng kho YAGAMI:
+- SML: cần xuất 401 | onHand 1419 | reserved 246 | available 1173
+- SMN: cần xuất 25 | onHand 525 | reserved 32 | available 493
+- SLTL: cần xuất 58 | onHand 573 | reserved 40 | available 533
+- MYG: cần xuất 398 | onHand 655 | reserved 353 | available 302 ⚠️ thiếu khả dụng
+KHO YAGAMI BÌNH DƯƠNG:
+- SML: cần xuất 182 | onHand 1224 | reserved 20 | available 1204
+- SMN: cần xuất 40 | onHand 641 | reserved 0 | available 641
+- SLTL: cần xuất 32 | onHand 433 | reserved 0 | available 433
+- MYG: cần xuất 204 | onHand 628 | reserved 16 | available 612
+
+Còn phiếu tạm đúng kỳ (0):
+- Không có
+Chưa có đơn đúng kỳ (1):
+- Tổng kho YAGAMI: GÒ QUAO — chưa có DH
+Cần đối soát (7):
+- Tổng kho YAGAMI: AN CHÂU — DH032378→HD, DH032372→HD — nhiều DH trong kỳ (2)
+- Tổng kho YAGAMI: TÂN HIỆP — DH032411/Đã hủy, DH032414→HD — nhiều DH trong kỳ (2); trạng thái DH/HD không khớp
+- Tổng kho YAGAMI: PHÚ HÒA - AN GIANG — DH032425/Đã hủy, DH032446→HD, DH032415/Đã hủy — nhiều DH trong kỳ (3); trạng thái DH/HD không khớp
+- Tổng kho YAGAMI: GIỒNG RIỀNG — DH032413/Đã hủy, DH032418→HD, DH032394/Đã hủy — nhiều DH trong kỳ (3); trạng thái DH/HD không khớp
+- KHO YAGAMI BÌNH DƯƠNG: THỐNG NHẤT — DH032423/Đã hủy, DH032449→HD, DH032422/Đã hủy, DH032419/Đã hủy — nhiều DH trong kỳ (4); trạng thái DH/HD không khớp
+- KHO YAGAMI BÌNH DƯƠNG: QUẬN 12 — DH032426/Đã hủy, DH032448→HD, DH032420/Đã hủy, DH032410/Đã hủy — nhiều DH trong kỳ (4); trạng thái DH/HD không khớp
+- KHO YAGAMI BÌNH DƯƠNG: BẾN LỨC — DH032416/Đã hủy, DH032450→HD, DH032412/Đã hủy — nhiều DH trong kỳ (3); trạng thái DH/HD không khớp
+
+Điểm nghẽn: Tổng kho YAGAMI: 0 phiếu tạm, 1 chưa có đơn, 4 cần đối soát; KHO YAGAMI BÌNH DƯƠNG: 0 phiếu tạm, 0 chưa có đơn, 3 cần đối soát
+Ghi chú: không dùng trạng thái buổi sáng; DH/HD đối chiếu bằng invoice.orderCode = order.code và HD Hoàn thành. Hơi căng nhưng số phải sạch nha Anh 📦

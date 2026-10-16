@@ -1,0 +1,6 @@
+{
+  "port": 8765,
+  "bindHost": "127.0.0.1",
+  "autoSync": true,
+  "dailyTime": "07:30"
+}

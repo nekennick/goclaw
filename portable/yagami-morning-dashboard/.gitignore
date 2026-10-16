@@ -1,0 +1,4 @@
+config/.env.kiotviet
+data/kiotviet/
+data/screenshots/
+__pycache__/

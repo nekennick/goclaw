@@ -1,0 +1,79 @@
+{
+  "name": "Yagami Dashboard Knowledge Base",
+  "description": "Portable AI-readable knowledge for Yagami branch, warehouse, route, and customer-code mapping.",
+  "language": "vi-VN",
+  "encoding": "UTF-8",
+  "version": 10,
+  "verifiedAt": "2026-08-20",
+  "sourceOfTruth": "yagami-branch-warehouse-map.json",
+  "recommendedReadOrder": [
+    "README.md",
+    "KNOWLEDGE_MANIFEST.json",
+    "yagami-branch-warehouse-map.json",
+    "yagami-branches.jsonl",
+    "yagami-branch-warehouse-map.md"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "type": "guide",
+      "purpose": "Explains how AI agents should load and use this knowledge pack."
+    },
+    {
+      "path": "KNOWLEDGE_MANIFEST.json",
+      "type": "manifest",
+      "purpose": "Machine-readable index of files, version, and read order."
+    },
+    {
+      "path": "yagami-branch-warehouse-map.json",
+      "type": "canonical-json",
+      "purpose": "Authoritative structured source for branch and warehouse mapping."
+    },
+    {
+      "path": "yagami-branches.jsonl",
+      "type": "jsonl",
+      "purpose": "One branch per line for retrieval, embeddings, or streaming ingestion."
+    },
+    {
+      "path": "yagami-branches.csv",
+      "type": "csv",
+      "purpose": "Spreadsheet-friendly export for manual review and quick sharing."
+    },
+    {
+      "path": "yagami-branch-warehouse-map.md",
+      "type": "human-readable",
+      "purpose": "Human-readable branch and warehouse summary."
+    }
+  ],
+  "joinKeys": {
+    "primary": "customerCode",
+    "secondary": "canonicalName",
+    "fallback": "rawName"
+  },
+  "validWarehouses": [
+    "CAO_LANH",
+    "BINH_DUONG"
+  ],
+  "safety": {
+    "containsSecrets": false,
+    "shareable": true,
+    "notes": "Do not add .env values, API keys, credentials, or database snapshots to this folder."
+  },
+  "changeLog": [
+    {
+      "version": 5,
+      "date": "2026-07-09",
+      "change": "Updated YAGAMI LỘC NINH from planned to active pending KiotViet customerCode based on branch opening announcement, branch 209, opening 28.06-30.06.2026."
+    },
+    {
+      "version": 6,
+      "date": "2026-07-10",
+      "change": "Updated Bình Dương delivery schedule from route image confirmed by Anh Khoa; confirmed THỦ DẦU MỘT mapping and added MONO TÂY NINH KH000190."
+    },
+    {
+      "version": 10,
+      "date": "2026-08-20",
+      "change": "Updated Yagami weekly vehicle route knowledge base from newest route image confirmed by Anh Khoa; see canonical map changeLog for detailed branch/day movements and Sunday soup-only rule."
+    }
+  ]
+}

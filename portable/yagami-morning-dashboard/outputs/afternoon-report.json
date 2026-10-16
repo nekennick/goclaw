@@ -1,0 +1,474 @@
+{
+  "now": "18/09/2026 16:01:33",
+  "syncLocal": "18/09/2026 16:01:33",
+  "day": "THỨ 6",
+  "week": "14/09-18/09 16:01",
+  "sched": 39,
+  "withOrders": 36,
+  "missing": 3,
+  "totalOrders": 44,
+  "done": [
+    {
+      "branch": "YAGAMI TRƯỜNG XUÂN",
+      "code": "DH034720",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "17.070.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI HUỲNH HỮU NGHĨA",
+      "code": "DH034719",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "20.911.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI SÔNG ĐỐC",
+      "code": "DH034718",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "56.965.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TÂN CHÂU - TN",
+      "code": "DH034715",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "30.396.800",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TRẢNG BÀNG",
+      "code": "DH034714",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "47.610.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI SÓC TRĂNG",
+      "code": "DH034710",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "60.105.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI NGÃ 7 HẬU GIANG",
+      "code": "DH034708",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "18.885.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI CÂY DƯƠNG",
+      "code": "DH034705",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "19.022.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TÂN THẠNH",
+      "code": "DH034703",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "20.476.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI GIÁ RAI",
+      "code": "DH034702",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "104.242.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI CÁI TẮC",
+      "code": "DH034701",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "45.435.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TÂN BIÊN",
+      "code": "DH034695",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "31.819.200",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI THÁP MƯỜI",
+      "code": "DH034694",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "31.750.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TÂY NINH",
+      "code": "DH034693",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "68.137.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI PHÚ TÂM",
+      "code": "DH034692",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "22.053.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI ĐỨC HUỆ",
+      "code": "DH034690",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "31.811.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI PHƯỚC ĐÔNG",
+      "code": "DH034689",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "65.025.300",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI DƯƠNG MINH CHÂU",
+      "code": "DH034687",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "41.380.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI HÒA THÀNH",
+      "code": "DH034685",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "35.017.100",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI CỦ CHI",
+      "code": "DH034682",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "84.281.700",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI CÁI NƯỚC",
+      "code": "DH034681",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "30.665.000",
+      "status": "Đang giao hàng"
+    },
+    {
+      "branch": "YAGAMI CÀ MAU",
+      "code": "DH034680",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "24.793.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI NĂM CĂN",
+      "code": "DH034679",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "23.105.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI CHÂU THÀNH - SÓC TRĂNG",
+      "code": "DH034588",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "15.469.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI GÀNH HÀO",
+      "code": "DH034631",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "20.378.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI THẠNH HÓA",
+      "code": "DH034653",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "25.393.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI NGAN DỪA",
+      "code": "DH034654",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "25.060.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI AN BIÊN",
+      "code": "DH034660",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "64.431.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI VĨNH THUẬN",
+      "code": "DH034663",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "46.838.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI PHƯỚC LONG - BẠC LIÊU",
+      "code": "DH034669",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "50.532.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TẮC VÂN",
+      "code": "DH034670",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "44.804.000",
+      "status": "Hoàn thành"
+    }
+  ],
+  "pending": [],
+  "reconcile": [
+    {
+      "branch": "YAGAMI SA ĐÉC",
+      "code": "DH034725",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "37.852.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TT. THỨ 11",
+      "code": "DH034716",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "1.305.000",
+      "status": "Đã hủy"
+    },
+    {
+      "branch": "YAGAMI TT. THỨ 11",
+      "code": "DH034724",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "35.707.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI GÒ DẦU",
+      "code": "DH034712",
+      "warehouse": "KHO YAGAMI BÌNH DƯƠNG",
+      "total": "36.415.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI KIẾN TƯỜNG",
+      "code": "DH034686",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "40.194.500",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TRẦN VĂN THỜI",
+      "code": "DH034684",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "200.000",
+      "status": "Đã hủy"
+    },
+    {
+      "branch": "YAGAMI TRẦN VĂN THỜI",
+      "code": "DH034688",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "30.847.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI TRẦN VĂN THỜI",
+      "code": "DH034683",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "31.162.000",
+      "status": "Đã hủy"
+    },
+    {
+      "branch": "YAGAMI TT. THỨ 11",
+      "code": "DH034648",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "32.427.500",
+      "status": "Đã hủy"
+    },
+    {
+      "branch": "YAGAMI GÒ DẦU",
+      "code": "DH034596",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "1.075.000",
+      "status": "Đã hủy"
+    },
+    {
+      "branch": "YAGAMI KIẾN TƯỜNG",
+      "code": "DH034581",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "1.510.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI SA ĐÉC",
+      "code": "DH034575",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "10.842.000",
+      "status": "Hoàn thành"
+    },
+    {
+      "branch": "YAGAMI GÒ DẦU",
+      "code": "DH034547",
+      "warehouse": "Tổng kho YAGAMI",
+      "total": "4.076.000",
+      "status": "Đã hủy"
+    }
+  ],
+  "missingList": [
+    {
+      "warehouse": "CAO_LANH",
+      "day": "THỨ 6",
+      "sourceCell": "F9",
+      "rawName": "THỚI BÌNH",
+      "canonicalName": "YAGAMI THỚI BÌNH",
+      "customerCode": "KH000150",
+      "status": "ACTIVE",
+      "routeType": "SCHEDULED_TRUCK",
+      "notes": null
+    },
+    {
+      "warehouse": "CAO_LANH",
+      "day": "THỨ 6",
+      "sourceCell": "F8",
+      "rawName": "ĐẦM DƠI",
+      "canonicalName": "YAGAMI ĐẦM DƠI",
+      "customerCode": "KH000100",
+      "status": "ACTIVE",
+      "routeType": "SCHEDULED_TRUCK",
+      "notes": null
+    },
+    {
+      "warehouse": "BINH_DUONG",
+      "day": "THỨ 6",
+      "sourceCell": null,
+      "rawName": "MONO TÂY NINH",
+      "canonicalName": "MONO TÂY NINH",
+      "customerCode": "KH000190",
+      "status": "ACTIVE",
+      "routeType": "SCHEDULED_TRUCK",
+      "notes": "Confirmed by Anh Khoa on 2026-07-10: MONO in Bình Dương route schedule is MONO TÂY NINH, KiotViet code KH000190. Bình Dương route schedule confirmed 2026-07-10: runs THỨ 6."
+    }
+  ],
+  "inv4": [
+    {
+      "productId": 27924040,
+      "productCode": "CA",
+      "productName": "Cá Viên",
+      "branchId": 385885,
+      "branchName": "Tổng kho YAGAMI",
+      "cost": 0.0,
+      "onHand": 2353.5,
+      "reserved": 495,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 1858.5,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 27924040,
+      "productCode": "CA",
+      "productName": "Cá Viên",
+      "branchId": 421136,
+      "branchName": "KHO YAGAMI BÌNH DƯƠNG",
+      "cost": 0.0,
+      "onHand": 820.5,
+      "reserved": 0,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 820.5,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 34817490,
+      "productCode": "myg",
+      "productName": "Mì Yagami",
+      "branchId": 385885,
+      "branchName": "Tổng kho YAGAMI",
+      "cost": 0.0,
+      "onHand": 214,
+      "reserved": 210,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 4,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 34817490,
+      "productCode": "myg",
+      "productName": "Mì Yagami",
+      "branchId": 421136,
+      "branchName": "KHO YAGAMI BÌNH DƯƠNG",
+      "cost": 0.0,
+      "onHand": 13,
+      "reserved": 0,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 13,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 50209915,
+      "productCode": "SML",
+      "productName": "Súp Mì Lớn (52 lít)",
+      "branchId": 385885,
+      "branchName": "Tổng kho YAGAMI",
+      "cost": 0.0,
+      "onHand": 2347,
+      "reserved": 645,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 1702,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 50209915,
+      "productCode": "SML",
+      "productName": "Súp Mì Lớn (52 lít)",
+      "branchId": 421136,
+      "branchName": "KHO YAGAMI BÌNH DƯƠNG",
+      "cost": 63652.86,
+      "onHand": 1271,
+      "reserved": 0,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 1271,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 32279934,
+      "productCode": "XXM",
+      "productName": "Xúc xích YAGAMI",
+      "branchId": 385885,
+      "branchName": "Tổng kho YAGAMI",
+      "cost": 0.0,
+      "onHand": 3569,
+      "reserved": 400,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 3169,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    },
+    {
+      "productId": 32279934,
+      "productCode": "XXM",
+      "productName": "Xúc xích YAGAMI",
+      "branchId": 421136,
+      "branchName": "KHO YAGAMI BÌNH DƯƠNG",
+      "cost": 0.0,
+      "onHand": 1339,
+      "reserved": 0,
+      "onOrder": 0,
+      "isActive": true,
+      "available": 1339,
+      "syncedAt": "2026-09-18T09:01:33+00:00"
+    }
+  ],
+  "kbv": 10,
+  "kbdate": "2026-08-20"
+}
