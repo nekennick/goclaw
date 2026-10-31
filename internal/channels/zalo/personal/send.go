@@ -15,7 +15,7 @@ import (
 
 // Keep a safety margin below the Zalo transport ceiling. It lets reports split
 // at meaningful section boundaries instead of leaving a tiny trailing bubble.
-const maxTextLength = 1600
+const maxTextLength = 2000
 
 // Send delivers an outbound message to a Zalo chat.
 func (c *Channel) Send(ctx context.Context, msg bus.OutboundMessage) error {
@@ -87,12 +87,13 @@ func (c *Channel) sendFile(ctx context.Context, sess *protocol.Session, chatID s
 }
 
 func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, chatID string, threadType protocol.ThreadType, text string) error {
-	plainText, markdownStyles := stripMarkdownWithStyles(text)
-	resolved := mentionResolution{text: plainText, styles: markdownStyles}
+	resolved := mentionResolution{text: text}
 	if threadType == protocol.ThreadTypeGroup {
-		resolved = c.resolveGroupMentions(ctx, chatID, plainText)
-		resolved.styles = append(resolved.styles, markdownStyles...)
+		resolved = c.resolveGroupMentions(ctx, chatID, text)
 	}
+	plainText, markdownStyles := stripMarkdownWithStyles(resolved.text)
+	resolved.text = plainText
+	resolved.styles = markdownStyles
 	resolved = addZaloReportStyles(resolved)
 	for _, chunk := range splitMentionResolution(resolved, maxTextLength) {
 		messageID, err := protocol.SendMessageWithFormatting(ctx, sess, chatID, threadType, chunk.text, chunk.mentions, chunk.styles)

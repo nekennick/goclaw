@@ -547,16 +547,30 @@ func buildRuntimeSection(cfg SystemPromptConfig) []string {
 }
 
 // buildChannelFormattingHint returns platform-specific formatting guidance.
-// Zalo does not render any markup, so we instruct the model to use plain text.
 func buildChannelFormattingHint(channelType string) []string {
 	switch channelType {
-	case "zalo", "zalo_personal":
+	case "zalo_personal":
+		return []string{
+			"## Output Formatting for Zalo Personal",
+			"",
+			"Zalo Personal supports rich formatting. GoClaw automatically converts Markdown formatting into native Zalo styling spans before sending:",
+			"- Use `## Heading` for main titles / sections (rendered as Green Bold).",
+			"- Use `### Heading` for subheadings, scenes, steps (rendered as Orange Bold).",
+			"- Use `***highlight***` for core keywords / focus phrases (rendered as Orange Bold).",
+			"- Use `- **Label**: details` for bullet points. Only the label is bold black, colon and text are normal.",
+			"- Use `**bold**` for key terms, numbers, durations (rendered as Bold Black).",
+			"- Separate major sections and steps with a blank line (\\n\\n).",
+			"- Do NOT use markdown tables (use bullet points or key-value lists instead).",
+			"- Do NOT use unicode bullet (•); always use markdown dash `- `.",
+			"",
+		}
+	case "zalo":
 		return []string{
 			"## Output Formatting",
 			"",
-			"This channel (Zalo) does NOT support any text formatting — no Markdown, no HTML, no bold/italic/code.",
+			"This channel (Zalo Bot OA) does NOT support any text formatting — no Markdown, no HTML, no bold/italic/code.",
 			"Always respond in clean plain text. Do not use **, __, `, ```, #, > or any markup syntax.",
-			"For lists use simple dashes or bullets (•). For code, just paste the code as-is without fencing.",
+			"For lists use simple dashes. For code, just paste the code as-is without fencing.",
 			"",
 		}
 	default:

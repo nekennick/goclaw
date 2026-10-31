@@ -61,12 +61,27 @@ func TestSplitMentionResolutionDoesNotCutMention(t *testing.T) {
 }
 
 func TestAddZaloReportStyles(t *testing.T) {
-	styled := addZaloReportStyles(mentionResolution{text: "1. Ket qua chinh\nNoi dung\n📦 Chi tiet kho"})
-	if len(styled.styles) != 4 {
-		t.Fatalf("styles = %#v", styled.styles)
+	text := "1. Ket qua chinh\nNoi dung\n📦 Chi tiet kho\n• Lịch kiểm kho: Thí điểm tại Cao Lãnh\nNguồn:"
+	styled := addZaloReportStyles(mentionResolution{text: text})
+	// Expect styles:
+	// "1. Ket qua chinh" -> green + bold (2 styles)
+	// "📦 Chi tiet kho" -> orange + bold (2 styles)
+	// "Lịch kiểm kho" -> bold (1 style)
+	// "Nguồn" -> bold (1 style)
+	if len(styled.styles) != 6 {
+		t.Fatalf("styles count = %d, want 6: %#v", len(styled.styles), styled.styles)
 	}
-	if styled.styles[0].Style != "c_15a85f" || styled.styles[1].Style != "b" || styled.styles[2].Style != "c_f27806" || styled.styles[3].Style != "b" {
-		t.Fatalf("styles = %#v", styled.styles)
+
+	// Verify "Lịch kiểm kho" style
+	lichStart, lichEnd := byteRangeForUTF16(text, styled.styles[4].Start, styled.styles[4].Len)
+	if text[lichStart:lichEnd] != "Lịch kiểm kho" {
+		t.Fatalf("bullet label text = %q, want 'Lịch kiểm kho'", text[lichStart:lichEnd])
+	}
+
+	// Verify "Nguồn" style (colon must NOT be included)
+	nguonStart, nguonEnd := byteRangeForUTF16(text, styled.styles[5].Start, styled.styles[5].Len)
+	if text[nguonStart:nguonEnd] != "Nguồn" {
+		t.Fatalf("nguon text = %q, want 'Nguồn'", text[nguonStart:nguonEnd])
 	}
 }
 

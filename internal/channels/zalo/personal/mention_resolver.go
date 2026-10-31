@@ -255,6 +255,22 @@ func naturalChunkLimit(text string, offset, hardLimit int) int {
 	}
 	if paragraph := strings.LastIndex(text[offset:limit], "\n\n"); paragraph >= 0 {
 		candidate := offset + paragraph + 2
+		// Avoid leaving an orphan heading stranded at the end of a bubble
+		beforeBreak := strings.TrimRight(text[offset:offset+paragraph], " \t\r\n")
+		lastLineStart := strings.LastIndexByte(beforeBreak, '\n')
+		lastLine := beforeBreak
+		if lastLineStart >= 0 {
+			lastLine = beforeBreak[lastLineStart+1:]
+		}
+		lastLine = strings.TrimSpace(lastLine)
+		if strings.HasPrefix(lastLine, "#") || (len(lastLine) <= 35 && !strings.ContainsAny(lastLine, ".,;")) {
+			if prevParagraph := strings.LastIndex(text[offset:offset+paragraph], "\n\n"); prevParagraph >= 0 {
+				prevCandidate := offset + prevParagraph + 2
+				if prevCandidate-offset >= 320 {
+					return prevCandidate
+				}
+			}
+		}
 		// A tiny heading-only bubble is no better than a hard cut. Prefer a
 		// paragraph boundary only when it contains a meaningful report block.
 		if candidate-offset >= 320 {
@@ -295,15 +311,33 @@ func addZaloReportStyles(in mentionResolution) mentionResolution {
 			length := utf16Length(trimmed)
 			switch {
 			case isNumberedReportHeading(trimmed):
+				hLen := length
+				if colon := strings.IndexByte(trimmed, ':'); colon > 0 && colon < 60 {
+					hLen = utf16Length(trimmed[:colon])
+				}
 				in.styles = append(in.styles,
-					protocol.TextStyle{Start: start, Len: length, Style: "c_15a85f"},
-					protocol.TextStyle{Start: start, Len: length, Style: "b"},
+					protocol.TextStyle{Start: start, Len: hLen, Style: "c_15a85f"},
+					protocol.TextStyle{Start: start, Len: hLen, Style: "b"},
 				)
 			case isEmojiReportHeading(trimmed):
 				in.styles = append(in.styles,
 					protocol.TextStyle{Start: start, Len: length, Style: "c_f27806"},
 					protocol.TextStyle{Start: start, Len: length, Style: "b"},
 				)
+			default:
+				if relOffset, byteLen := extractBulletLabelRange(trimmed); byteLen > 0 {
+					labelStart := utf16Length(in.text[:lineStart+leadingBytes+relOffset])
+					labelLen := utf16Length(trimmed[relOffset : relOffset+byteLen])
+					if !hasStyleOverlap(in.styles, labelStart, labelLen) {
+						in.styles = append(in.styles, protocol.TextStyle{Start: labelStart, Len: labelLen, Style: "b"})
+					}
+				} else if relOffset, byteLen := isStandaloneLabelHeading(trimmed); byteLen > 0 {
+					labelStart := utf16Length(in.text[:lineStart+leadingBytes+relOffset])
+					labelLen := utf16Length(trimmed[relOffset : relOffset+byteLen])
+					if !hasStyleOverlap(in.styles, labelStart, labelLen) {
+						in.styles = append(in.styles, protocol.TextStyle{Start: labelStart, Len: labelLen, Style: "b"})
+					}
+				}
 			}
 		}
 		if lineEnd == len(in.text) {
@@ -312,6 +346,54 @@ func addZaloReportStyles(in mentionResolution) mentionResolution {
 		lineStart = lineEnd + 1
 	}
 	return in
+}
+
+func hasStyleOverlap(styles []protocol.TextStyle, start, length int) bool {
+	end := start + length
+	for _, s := range styles {
+		if s.Style == "b" {
+			sEnd := s.Start + s.Len
+			if !(end <= s.Start || start >= sEnd) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func extractBulletLabelRange(line string) (int, int) {
+	bulletLen := 0
+	if strings.HasPrefix(line, "• ") {
+		bulletLen = len("• ")
+	} else if strings.HasPrefix(line, "- ") || strings.HasPrefix(line, "* ") {
+		bulletLen = 2
+	}
+	if bulletLen == 0 {
+		return 0, 0
+	}
+	rest := line[bulletLen:]
+	colon := strings.IndexByte(rest, ':')
+	if colon <= 0 || colon > 48 {
+		return 0, 0
+	}
+	label := strings.TrimSpace(rest[:colon])
+	if label == "" || strings.ContainsAny(label, "\n\r\t.,?!") {
+		return 0, 0
+	}
+	labelStartInRest := strings.Index(rest, label)
+	return bulletLen + labelStartInRest, len(label)
+}
+
+func isStandaloneLabelHeading(line string) (int, int) {
+	if len(line) < 3 || len(line) > 30 || !strings.HasSuffix(line, ":") {
+		return 0, 0
+	}
+	label := strings.TrimSpace(strings.TrimSuffix(line, ":"))
+	if label == "" || strings.ContainsAny(label, "\n\r\t.,?!") {
+		return 0, 0
+	}
+	labelStart := strings.Index(line, label)
+	return labelStart, len(label)
 }
 
 func isNumberedReportHeading(line string) bool {
