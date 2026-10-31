@@ -2,7 +2,10 @@ package tools
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
+	"maps"
 	"path/filepath"
 	"strings"
 	"time"
@@ -78,10 +81,8 @@ func (v *VaultInterceptor) AfterWrite(ctx context.Context, resolvedPath, content
 
 	// Team-scoped files belong to the team, not the creating agent.
 	var agentIDPtr *string
-	eventAgentID := ""
 	if agentOwned {
 		agentIDPtr = &agentID
-		eventAgentID = agentID
 	}
 
 	doc := &store.VaultDocument{
@@ -95,14 +96,33 @@ func (v *VaultInterceptor) AfterWrite(ctx context.Context, resolvedPath, content
 		DocType:     docType,
 		ContentHash: hash,
 	}
+	existing, err := v.findRegistration(ctx, doc)
+	if err != nil {
+		slog.Warn("vault.after_write: lookup", "path", relPath, "err", err)
+		return
+	}
+	if existing != nil {
+		preserved := *existing
+		doc = &preserved
+		doc.Metadata = maps.Clone(existing.Metadata)
+		doc.ContentHash = hash
+	}
+	eventAgentID := ""
+	if doc.AgentID != nil {
+		eventAgentID = *doc.AgentID
+	}
 	// Phase 05: tag with delegation_id when write happens inside a delegated
 	// task so Phase 2.6 auto-linking can sibling-link the docs later.
 	if delegID := DelegationIDFromCtx(ctx); delegID != "" {
 		if doc.Metadata == nil {
 			doc.Metadata = make(map[string]any)
 		}
-		doc.Metadata["delegation_id"] = delegID
-		doc.Metadata["created_in"] = "delegation"
+		if _, exists := doc.Metadata["delegation_id"]; !exists {
+			doc.Metadata["delegation_id"] = delegID
+		}
+		if _, exists := doc.Metadata["created_in"]; !exists {
+			doc.Metadata["created_in"] = "delegation"
+		}
 	}
 	if err := v.vaultStore.UpsertDocument(ctx, doc); err != nil {
 		slog.Warn("vault.after_write", "path", relPath, "err", err)
@@ -161,21 +181,10 @@ func (v *VaultInterceptor) AfterWriteMedia(ctx context.Context, resolvedPath, su
 	scope, teamID, agentOwned := inferScopeFromContext(ctx)
 
 	var agentIDPtr *string
-	eventAgentID := ""
 	if agentOwned {
 		agentIDPtr = &agentID
-		eventAgentID = agentID
 	}
 
-	// Build metadata carefully: mime_type always set, plus optional
-	// delegation_id / created_in when running inside a delegation.
-	// Using explicit assignment preserves any future caller-supplied keys
-	// added via a metadata-capable variant — red-team concern #18.
-	meta := map[string]any{"mime_type": mimeType}
-	if delegID := DelegationIDFromCtx(ctx); delegID != "" {
-		meta["delegation_id"] = delegID
-		meta["created_in"] = "delegation"
-	}
 	doc := &store.VaultDocument{
 		TenantID:    tenantID,
 		AgentID:     agentIDPtr,
@@ -187,7 +196,34 @@ func (v *VaultInterceptor) AfterWriteMedia(ctx context.Context, resolvedPath, su
 		DocType:     "media",
 		ContentHash: hash,
 		Summary:     summary,
-		Metadata:    meta,
+	}
+	existing, err := v.findRegistration(ctx, doc)
+	if err != nil {
+		slog.Warn("vault.after_write_media: lookup", "path", relPath, "err", err)
+		return
+	}
+	if existing != nil {
+		preserved := *existing
+		doc = &preserved
+		doc.Metadata = maps.Clone(existing.Metadata)
+		doc.ContentHash = hash
+		doc.Summary = summary
+	}
+	if doc.Metadata == nil {
+		doc.Metadata = make(map[string]any)
+	}
+	doc.Metadata["mime_type"] = mimeType
+	if delegID := DelegationIDFromCtx(ctx); delegID != "" {
+		if _, exists := doc.Metadata["delegation_id"]; !exists {
+			doc.Metadata["delegation_id"] = delegID
+		}
+		if _, exists := doc.Metadata["created_in"]; !exists {
+			doc.Metadata["created_in"] = "delegation"
+		}
+	}
+	eventAgentID := ""
+	if doc.AgentID != nil {
+		eventAgentID = *doc.AgentID
 	}
 	if err := v.vaultStore.UpsertDocument(ctx, doc); err != nil {
 		slog.Warn("vault.after_write_media", "path", relPath, "err", err)
@@ -234,12 +270,16 @@ func (v *VaultInterceptor) BeforeRead(ctx context.Context, resolvedPath string) 
 		return
 	}
 
-	// Try agent-scoped first, then tenant-wide (team/shared docs have no agent_id).
-	doc, err := v.vaultStore.GetDocument(ctx, tenantID, agentID, relPath)
-	if err != nil {
-		doc, err = v.vaultStore.GetDocument(ctx, tenantID, "", relPath)
+	scope, teamID, agentOwned := inferScopeFromContext(ctx)
+	var owner *string
+	if agentOwned {
+		owner = &agentID
 	}
-	if err != nil {
+	doc, err := v.findRegistration(ctx, &store.VaultDocument{
+		TenantID: tenantID, AgentID: owner, TeamID: teamID,
+		ChatID: inferChatIDFromContext(ctx), Scope: scope, Path: relPath,
+	})
+	if err != nil || doc == nil {
 		return // not registered yet — skip
 	}
 
@@ -254,3 +294,44 @@ func (v *VaultInterceptor) BeforeRead(ctx context.Context, resolvedPath string) 
 	}
 }
 
+// findRegistration reuses only the inferred owner or an explicitly shared row.
+// GetDocument's empty agent filter matches ANY owner; it is not authorization.
+func (v *VaultInterceptor) findRegistration(ctx context.Context, want *store.VaultDocument) (*store.VaultDocument, error) {
+	shared, err := vault.FindSharedRegistration(ctx, v.vaultStore, want.TenantID, want.Path)
+	if err != nil {
+		return nil, err
+	}
+	rc := store.RunContext{}
+	if current := store.RunContextFromCtx(ctx); current != nil {
+		rc = *current
+	}
+	rc.TeamID = ""
+	if want.TeamID != nil {
+		rc.TeamID = *want.TeamID
+	}
+	agent := ""
+	if want.AgentID != nil {
+		agent = *want.AgentID
+	}
+	doc, err := v.vaultStore.GetDocument(store.WithRunContext(ctx, &rc), want.TenantID, agent, want.Path)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	if err == nil && doc != nil && doc.TenantID == want.TenantID && doc.Path == want.Path &&
+		doc.Scope == want.Scope && vaultRegistrationOwnerEqual(doc.AgentID, want.AgentID) && vaultRegistrationOwnerEqual(doc.TeamID, want.TeamID) {
+		if shared != nil {
+			return nil, errors.New("coexisting owned and shared vault registrations")
+		}
+		// A team-wide registration is visible to all its chats; a chat-specific
+		// registration must never be updated through a different chat context.
+		if doc.ChatID != nil && !vaultRegistrationOwnerEqual(doc.ChatID, want.ChatID) {
+			return nil, errors.New("vault registration belongs to a different chat")
+		}
+		return doc, nil
+	}
+	return shared, nil
+}
+
+func vaultRegistrationOwnerEqual(a, b *string) bool {
+	return a == nil && b == nil || a != nil && b != nil && *a == *b
+}

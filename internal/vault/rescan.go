@@ -2,6 +2,8 @@ package vault
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"path/filepath"
 	"strings"
@@ -53,7 +55,6 @@ func RescanWorkspace(ctx context.Context, params RescanParams, vs store.VaultSto
 		Skipped:   walkStats.SkippedExcluded + walkStats.SkippedSymlinks + walkStats.SkippedTooLarge,
 		Truncated: walkStats.Truncated,
 	}
-
 	for _, entry := range entries {
 		agentID, teamID, chatID, scope, strippedPath := inferOwnerFromPath(entry.RelPath, params.AgentMap, params.TeamSet)
 		if scope == "" {
@@ -61,34 +62,16 @@ func RescanWorkspace(ctx context.Context, params RescanParams, vs store.VaultSto
 			result.Skipped++
 			continue
 		}
-
 		hash, hashErr := ContentHashFile(entry.AbsPath)
 		if hashErr != nil {
 			result.Errors++
 			continue
 		}
 
-		// Resolve the agent ID string for store lookup (empty string = no agent filter).
-		agentIDStr := ""
-		if agentID != nil {
-			agentIDStr = *agentID
-		}
-
 		// Use full workspace-relative path for DB storage and enrichment.
 		// This preserves the real filesystem path (e.g. "teams/{uuid}/system/file.md")
 		// so enrichment worker can locate files via filepath.Join(workspace, path).
 		relPath := entry.RelPath
-
-		// Check if document already exists with same hash.
-		// Fallback: also check old stripped path (pre-fix records stored without prefix).
-		existing, _ := vs.GetDocument(ctx, params.TenantID, agentIDStr, relPath)
-		if existing == nil && strippedPath != relPath {
-			existing, _ = vs.GetDocument(ctx, params.TenantID, agentIDStr, strippedPath)
-		}
-		if existing != nil && existing.ContentHash == hash {
-			result.Unchanged++
-			continue
-		}
 
 		doc := &store.VaultDocument{
 			TenantID:    params.TenantID,
@@ -100,6 +83,28 @@ func RescanWorkspace(ctx context.Context, params RescanParams, vs store.VaultSto
 			Title:       InferTitle(relPath),
 			DocType:     InferDocType(relPath),
 			ContentHash: hash,
+		}
+		// Paths suggest ownership only for NEW registrations. An explicitly
+		// shared registration must remain shared even inside an agent directory.
+		existing, lookupErr := findRescanRegistration(ctx, vs, doc)
+		if lookupErr == nil && existing == nil && strippedPath != relPath {
+			legacy := *doc
+			legacy.Path = strippedPath
+			existing, lookupErr = findRescanRegistration(ctx, vs, &legacy)
+		}
+		if lookupErr != nil {
+			slog.Warn("vault.rescan: lookup", "path", relPath, "err", lookupErr)
+			result.Errors++
+			continue
+		}
+		if existing != nil {
+			if existing.ContentHash == hash {
+				result.Unchanged++
+				continue
+			}
+			preserved := *existing
+			doc = &preserved
+			doc.ContentHash = hash
 		}
 
 		if err := vs.UpsertDocument(ctx, doc); err != nil {
@@ -119,6 +124,10 @@ func RescanWorkspace(ctx context.Context, params RescanParams, vs store.VaultSto
 		// Skip auto-generated media files (goclaw_gen_*) — they create excessive
 		// noise links and shouldn't be counted in progress tracking.
 		if bus != nil && !shouldSkipEnrichment(filepath.Base(relPath)) {
+			agentIDStr := ""
+			if doc.AgentID != nil {
+				agentIDStr = *doc.AgentID
+			}
 			result.PendingEvents = append(result.PendingEvents, eventbus.DomainEvent{
 				ID:        uuid.Must(uuid.NewV7()).String(),
 				Type:      eventbus.EventVaultDocUpserted,
@@ -146,6 +155,113 @@ func RescanWorkspace(ctx context.Context, params RescanParams, vs store.VaultSto
 		"truncated", result.Truncated)
 
 	return result, nil
+}
+
+// findRescanRegistration uses the existing lookup without treating its empty
+// agent filter as a shared-scope filter. Never reuse another agent/team's row.
+func findRescanRegistration(ctx context.Context, vs store.VaultStore, want *store.VaultDocument) (*store.VaultDocument, error) {
+	// Query shared by exact path before the owner lookup. A paginated tenant
+	// snapshot can miss rows when concurrent writes change updated_at ordering.
+	shared, err := FindSharedRegistration(ctx, vs, want.TenantID, want.Path)
+	if err != nil || want.Scope == "shared" {
+		return shared, err
+	}
+	rc := store.RunContext{}
+	if current := store.RunContextFromCtx(ctx); current != nil {
+		rc = *current
+	}
+	rc.TeamID = ""
+	if want.TeamID != nil {
+		rc.TeamID = *want.TeamID
+	}
+	agent := ""
+	if want.AgentID != nil {
+		agent = *want.AgentID
+	}
+	doc, err := vs.GetDocument(store.WithRunContext(ctx, &rc), want.TenantID, agent, want.Path)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	if err == nil && doc != nil && doc.TenantID == want.TenantID && doc.Path == want.Path &&
+		doc.Scope == want.Scope && rescanOwnerEqual(doc.AgentID, want.AgentID) && rescanOwnerEqual(doc.TeamID, want.TeamID) {
+		if shared != nil {
+			return nil, errors.New("coexisting owned and shared vault registrations")
+		}
+		return doc, nil
+	}
+	return shared, nil
+}
+
+// FindSharedRegistration finds the unique explicitly shared registration for an
+// exact tenant/path. Prefer the optional indexed store lookup. For stores without
+// it (e.g. stable test fakes), ListDocuments has no path filter: walk every
+// page, including after finding a match, to reject ambiguous orphan/shared rows.
+// Keep the returned UpdatedAt intact: store updates use it for stale-read CAS.
+func FindSharedRegistration(ctx context.Context, vs store.VaultStore, tenantID, path string) (*store.VaultDocument, error) {
+	if finder, ok := vs.(interface {
+		FindSharedDocumentByPath(context.Context, string, string) (*store.VaultDocument, error)
+	}); ok {
+		doc, err := finder.FindSharedDocumentByPath(ctx, tenantID, path)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		if doc != nil && (doc.TenantID != tenantID || doc.Path != path || doc.Scope != "shared" || doc.AgentID != nil || doc.TeamID != nil) {
+			return nil, errors.New("invalid shared vault registration")
+		}
+		return doc, nil
+	}
+	sharedByPath, err := loadSharedRegistrations(ctx, vs, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return uniqueSharedRegistration(sharedByPath[path])
+}
+
+func uniqueSharedRegistration(candidates []store.VaultDocument) (*store.VaultDocument, error) {
+	switch len(candidates) {
+	case 0:
+		return nil, nil
+	case 1:
+		preserved := candidates[0]
+		return &preserved, nil
+	default:
+		return nil, errors.New("ambiguous shared vault registrations")
+	}
+}
+
+func loadSharedRegistrations(ctx context.Context, vs store.VaultStore, tenantID string) (map[string][]store.VaultDocument, error) {
+	const pageSize = 100
+	sharedByPath := make(map[string][]store.VaultDocument)
+	for offset := 0; ; {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		docs, err := vs.ListDocuments(ctx, tenantID, "", store.VaultListOptions{
+			Scope: "shared", TeamID: new(""), Limit: pageSize, Offset: offset,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(docs) == 0 {
+			return sharedByPath, nil
+		}
+		for _, doc := range docs {
+			if doc.TenantID != tenantID || doc.Scope != "shared" || doc.AgentID != nil || doc.TeamID != nil {
+				continue
+			}
+			sharedByPath[doc.Path] = append(sharedByPath[doc.Path], doc)
+		}
+		// Advance by actual results rather than stopping at a short page: never
+		// silently treat a store-side page cap as absence or unique identity.
+		offset += len(docs)
+	}
+}
+
+func rescanOwnerEqual(a, b *string) bool {
+	return a == nil && b == nil || a != nil && b != nil && *a == *b
 }
 
 // inferOwnerFromPath parses a tenant-relative path to determine ownership.

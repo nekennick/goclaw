@@ -381,6 +381,58 @@ RESTful endpoints for vault operations.
 - `agent_id` — optional filter to specific agent (otherwise all tenant agents)
 - `scope`, `doc_type`, `limit`, `offset` — same as per-agent endpoint
 
+### Update document scope (HTTP)
+
+`PUT /v1/vault/documents/{docID}` and the backward-compatible
+`PUT /v1/agents/{agentID}/vault/documents/{docID}` use the same partial-update handler.
+Omitted/null fields are unchanged. An unchanged `scope` can accompany metadata
+edits; changing scope or team assignment requires the system **owner** role.
+An `admin` role alone does not prove tenant administration and is not accepted
+for reassignment by this handler. Existing team access checks still apply to
+non-owners; owners retain their existing membership bypass.
+
+- `{"scope":"shared"}` clears `agent_id`, `team_id`, and `chat_id`.
+- `{"scope":"team","team_id":"<uuid>"}` requires a non-zero team UUID,
+  clears `agent_id`, and clears `chat_id` when moving scope or team. A standalone
+  non-empty `team_id` also selects team scope. Non-owner team access is checked.
+- `{"scope":"personal"}` requires an existing agent owner; no owner is inferred
+  from the route. Reverse moves without an agent owner return 400 explicitly
+  because this endpoint does not accept a new agent owner target.
+- `team_id: ""` clears assignment and defaults to personal unless `scope` is
+  explicitly supplied; the personal-owner requirement still applies.
+- Invalid scopes and conflicting scope/team assignments return 400. A request
+  containing non-null `content` plus non-null `scope` or `team_id` returns 400
+  **before any filesystem write**, even if scope is unchanged. Send content
+  updates separately. Metadata-only scope moves do not move files on disk.
+
+Updates pass the existing document ID to `UpsertDocument`. This contract depends
+on both stores updating by supplied ID rather than inserting by the new namespace
+(a separately coordinated store change). Namespace collisions return 409; other
+upsert failures return a generic 500 without raw database details. Updates retain
+the fetched `UpdatedAt` concurrency token; stale/missing ID writes return a
+localized 409 asking the caller to refresh, without retrying an obsolete snapshot.
+Unchanged personal scope/owner metadata edits preserve `chat_id`; normalization
+only clears it on an authorized scope/team transition.
+
+Content PUT uses the optional `UpsertDocumentWithContent(ctx, doc, write)` store
+capability, implemented by both PostgreSQL and SQLite. The store validates the
+snapshot token and document constraints under its transaction lock, then invokes
+the filesystem callback and commits. The callback returns a context-independent
+restore function even after a partial write failure. Stale writes never invoke
+the callback; runtime callback/commit failures restore prior bytes (or remove a
+newly written file). Enrichment publishes only after success. This is not
+crash-atomic across DB and disk. Legacy/custom stores without the optional method
+return a localized 501 for content PUT instead of falling back to an unsafe
+write-before-CAS path; metadata updates retain the original interface.
+
+Web compatibility audit: both detail editors currently send
+`{title, doc_type, scope}` without content, so unchanged-scope metadata saves and
+owner personal-to-shared moves are compatible. The update hook has no `team_id`
+or agent-owner target, so it cannot initiate a new team assignment or reverse
+move to personal without an existing owner. UI controls/role gating are unchanged;
+unsupported selections receive API errors. This audit does not claim CLI/runtime
+package parity or validation of a separate released CLI repository.
+
 ---
 
 ## 7. Tools
@@ -552,9 +604,9 @@ Response (parallel results from vault + episodic + KG):
 ## 12. Limitations
 
 - **Vault docs do not auto-embed in system prompt** — Must be retrieved via agent tools
-- **No full-text indexing on document content** — Only title+path FTS; content requires embeddings
+- **Text body search** — Registered text documents have body chunks for keyword search; embeddings are optional. Check `body_indexed_hash` against `content_hash` after source updates.
 - **Sync is one-way** — Filesystem changes sync to vault; vault does not write back to FS
-- **No conflict resolution** — Concurrent edits not detected; last write wins
+- **Concurrent updates** — Supplied-ID updates must preserve the revision read from the store; stale snapshots are rejected rather than restoring older ownership. This is not automatic merging of file contents.
 - **Version history empty** — vault_versions table prepared for v3.1
 
 ---

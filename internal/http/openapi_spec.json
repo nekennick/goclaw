@@ -1423,10 +1423,13 @@
             "$ref": "#/components/responses/BadRequest"
           },
           "403": {
-            "description": "Forbidden — only owner may change team assignment."
+            "description": "Forbidden — scope or team reassignment requires owner role; team access is also checked for non-owners."
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Target scope collision, or document changed/deleted after reading. No database update is applied; refresh before retrying a stale update."
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -2377,10 +2380,13 @@
             "$ref": "#/components/responses/BadRequest"
           },
           "403": {
-            "description": "Forbidden — only owner may change team assignment."
+            "description": "Forbidden — scope or team reassignment requires owner role; team access is also checked for non-owners."
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Target scope collision, or document changed/deleted after reading. No database update is applied; refresh before retrying a stale update."
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -10837,10 +10843,15 @@
     },
     "VaultDocumentUpdateInput": {
       "type": "object",
-      "description": "Partial update. Omitted fields are left unchanged. `team_id`: nil = no change, `\"\"` = clear (back to personal), uuid = move to team (owner only).",
+      "description": "Partial update; omitted or null fields are unchanged. Scope/team reassignment requires owner role (admin alone is insufficient). Shared clears agent_id, team_id and chat_id; team clears agent_id and clears chat_id when moving scope/team. Personal requires an existing agent owner: this endpoint cannot assign a new owner and rejects reverse moves without one. team_id: omitted/null = unchanged; empty string = clear (personal unless scope explicitly supplied); non-empty UUID = team scope. Conflicting scope/team_id is rejected. Content must be sent separately from scope/team_id, even if scope is unchanged. The document ID and path are retained; target namespace collisions return 409 without raw database details.",
       "properties": {
         "title": {
           "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "nullable": true,
+          "description": "Omitted/null leaves file unchanged; empty string clears it. Cannot be combined with non-null scope or team_id. PostgreSQL/SQLite validate CAS under lock before writing; stale requests leave bytes unchanged. Runtime write/commit failures restore prior bytes (not crash-atomic across DB and disk). Custom stores without safe content-update capability return 501."
         },
         "doc_type": {
           "type": "string"

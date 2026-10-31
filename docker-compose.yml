@@ -24,7 +24,7 @@
 
 services:
   goclaw:
-    image: ghcr.io/nextlevelbuilder/goclaw:latest
+    image: ${GOCLAW_IMAGE:-ghcr.io/nextlevelbuilder/goclaw:latest}
     build:
       context: ${GOCLAW_DIR:-.}
       dockerfile: Dockerfile

@@ -183,6 +183,16 @@ func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolut
 		if limit > len(in.text) {
 			limit = len(in.text)
 		}
+		// Do not leave a short fragment such as "chÆ°a" / "Ä‘áº·t" in its own
+		// bubble. Pull this boundary back so the final report section remains a
+		// readable block.
+		minFinalChunkBytes := 240
+		if maxBytes/3 < minFinalChunkBytes {
+			minFinalChunkBytes = maxBytes / 3
+		}
+		if remaining := len(in.text) - limit; remaining > 0 && remaining < minFinalChunkBytes {
+			limit -= minFinalChunkBytes - remaining
+		}
 		limit = naturalChunkLimit(in.text, offset, limit)
 		for _, span := range byteMentions {
 			if span.start < limit && span.end > limit {
@@ -232,13 +242,24 @@ func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolut
 	return parts
 }
 
-// naturalChunkLimit keeps outbound bubbles readable. It prefers a line or
-// paragraph boundary, then a word boundary, and only hard-cuts when one line
-// itself exceeds the transport limit.
+// naturalChunkLimit keeps outbound bubbles readable. It prefers a paragraph,
+// then a line, then a word boundary, and only hard-cuts when one line itself
+// exceeds the transport limit.
 func naturalChunkLimit(text string, offset, hardLimit int) int {
+	if hardLimit >= len(text) {
+		return len(text)
+	}
 	limit := hardLimit
 	for limit < len(text) && !utf8.RuneStart(text[limit]) {
 		limit--
+	}
+	if paragraph := strings.LastIndex(text[offset:limit], "\n\n"); paragraph >= 0 {
+		candidate := offset + paragraph + 2
+		// A tiny heading-only bubble is no better than a hard cut. Prefer a
+		// paragraph boundary only when it contains a meaningful report block.
+		if candidate-offset >= 320 {
+			return candidate
+		}
 	}
 	if newline := strings.LastIndexByte(text[offset:limit], '\n'); newline >= 0 {
 		candidate := offset + newline + 1

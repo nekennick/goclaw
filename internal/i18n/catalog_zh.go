@@ -22,6 +22,17 @@ func init() {
 		// TODO(i18n): translate to zh
 		MsgAgentDeleteVaultConflict: "failed to delete agent: a vault document of this agent is at a path another deleted owner already orphaned; delete or re-path this agent's vault documents first, or upgrade to schema version 99 or later",
 
+		// Vault scope updates
+		MsgVaultContentScopeSeparate:     "内容和文档范围必须分别更新",
+		MsgVaultInvalidScope:             "无效的范围",
+		MsgVaultTeamScopeRequired:        "team_id 要求使用 team 范围",
+		MsgVaultScopeOwnerOnly:           "只有系统所有者才能更改文档范围或所属团队",
+		MsgVaultPersonalOwnerRequired:    "个人范围需要明确指定所属智能体；此接口不支持指定所属智能体",
+		MsgVaultScopeConflict:            "目标范围内已存在该文档",
+		MsgVaultUpdateFailed:             "更新文档失败",
+		MsgVaultUpdateConflict:           "文档已更改或不再可用；请刷新后再更新",
+		MsgVaultContentUpdateUnavailable: "此存储不支持安全更新文档内容",
+
 		// Agent
 		MsgAgentNotFound:                       "未找到Agent：%s",
 		MsgCannotDeleteDefault:                 "无法删除默认Agent",

@@ -3,8 +3,10 @@ package http
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -133,10 +135,12 @@ func TestWriteDocumentContent_RejectsFinalComponentSymlink(t *testing.T) {
 // overrides only the two methods the content path touches.
 type fakeVaultStore struct {
 	store.VaultStore
-	docs       map[string]*store.VaultDocument
-	upserted   bool
-	upsertErr  error
-	upsertCall int
+	docs             map[string]*store.VaultDocument
+	upserted         bool
+	upsertErr        error
+	upsertCall       int
+	beforeUpsert     func()
+	contentCommitErr error
 }
 
 func newFakeVaultStore() *fakeVaultStore {
@@ -148,16 +152,59 @@ func (f *fakeVaultStore) UpsertDocument(_ context.Context, doc *store.VaultDocum
 	if f.upsertErr != nil {
 		return f.upsertErr
 	}
+	if f.beforeUpsert != nil {
+		f.beforeUpsert()
+	}
 	if doc.ID == "" {
-		doc.ID = "doc-" + uuid.NewString()
+		doc.ID = uuid.NewString()
+		doc.UpdatedAt = time.Now().UTC()
+	} else {
+		saved := f.docs[doc.ID]
+		if saved == nil || doc.UpdatedAt.IsZero() || !doc.UpdatedAt.Equal(saved.UpdatedAt) {
+			return fmt.Errorf("vault update document: missing or stale document: %w", sql.ErrNoRows)
+		}
+		doc.UpdatedAt = saved.UpdatedAt.Add(time.Nanosecond)
 	}
 	f.upserted = true
-	f.docs[doc.ID] = doc
+	snapshot := *doc
+	f.docs[doc.ID] = &snapshot
 	return nil
 }
 
-func (f *fakeVaultStore) GetDocumentByID(_ context.Context, _ /*tenantID*/, id string) (*store.VaultDocument, error) {
-	return f.docs[id], nil
+func (f *fakeVaultStore) GetDocumentByID(_ context.Context, tenantID, id string) (*store.VaultDocument, error) {
+	doc := f.docs[id]
+	if doc == nil || doc.TenantID != tenantID {
+		return nil, nil
+	}
+	// Seeded fixtures represent persisted rows, whose updated_at is non-null.
+	if doc.UpdatedAt.IsZero() {
+		doc.UpdatedAt = time.Unix(1, 0).UTC()
+	}
+	// Real stores scan a detached row, not a pointer into persisted state.
+	snapshot := *doc
+	return &snapshot, nil
+}
+
+func (f *fakeVaultStore) UpsertDocumentWithContent(ctx context.Context, doc *store.VaultDocument, write func() (func() error, error)) error {
+	previous := f.docs[doc.ID]
+	token := doc.UpdatedAt
+	if err := f.UpsertDocument(ctx, doc); err != nil {
+		return err // CAS/constraint failure: callback must not run.
+	}
+	restore, err := write()
+	if err == nil {
+		err = f.contentCommitErr
+	}
+	if err != nil {
+		if restore != nil {
+			err = errors.Join(err, restore())
+		}
+		f.docs[doc.ID] = previous
+		doc.UpdatedAt = token
+		f.upserted = false
+		return err
+	}
+	return nil
 }
 
 // fakeEventBus captures published events and records whether the DB upsert had

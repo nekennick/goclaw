@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-10-30",
+  "status": "review_in_progress",
+  "operatingScope": {"warehouseKey":"CAO_LANH","rolloutStage":"pilot","ruleId":"SCOPE-01"},
+  "rules": [
+    {"id":"SCOPE-01","priority":"P1","status":"DA_XAC_NHAN","sources":["user_cao_lanh_pilot_scope_2026-10-30"],"question":null,"decision":{"confirmedPart":"Quy trình đang thí điểm ở kho Cao Lãnh","confirmedBy":"Anh Khoa","confirmedAt":"2026-10-30","warehouseScope":"CAO_LANH","rolloutStage":"pilot","appliesAutomaticallyToBinhDuong":false,"effectiveFrom":null}},
+    {"id":"AUTH-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["00","01","03","04","user_sync_disposal_confirmation_2026-10-30","user_inventory_adjustment_approval_2026-10-30","user_kiet_adjustment_executor_2026-10-30","user_verbal_adjustment_approval_2026-10-31"],"question":"Người thay thế/ủy quyền khi người có trách nhiệm vắng? Có cần bổ sung dấu vết cho phê duyệt trực tiếp bằng lời nói không?","decision":{"confirmedPart":"Giám đốc duyệt hủy hàng trả hỏng; Anh Khoa duyệt điều chỉnh tồn KiotViet bằng lời nói trực tiếp và Kiệt trực tiếp thao tác sau khi nghe duyệt","confirmedBy":"Anh Khoa","confirmedAt":"2026-10-31","relatedRules":["RET-01","INV-02"],"approvalCommunicationMethod":"Nói trực tiếp","durableApprovalRecord":false,"remainingStatus":"CAN_XAC_NHAN"}},
+    {"id":"TIME-01","priority":"P0","status":"DA_XAC_NHAN","sources":["00","01","03","04","user_1600_correction_2026-10-30","user_completion_definition_2026-10-30"],"question":null,"decision":{"confirmedPart":"Tất cả đơn đặt của khách trong ngày phải được xuất hóa đơn từ đơn đặt (phiếu tạm) trước 16:00; đó là hoàn tất xử lý đơn, không phải giờ kiểm tồn","confirmedBy":"Anh Khoa","confirmedAt":"2026-10-30","confirmationScope":"Ý nghĩa mốc 16:00, hạn giờ và định nghĩa hoàn tất xử lý đơn trong ngày","orderProcessingDeadline":"16:00","mustFinishBeforeDeadline":true,"isInventoryCountTime":false,"inventoryCountSchedule":{"ruleId":"INV-02"},"completionDefinition":"Đã xuất hóa đơn từ những đơn đặt (phiếu tạm)","warehouseScope":"CAO_LANH","effectiveFrom":null,"openTopics":["INV-02","ORDER-01","REPORT-01"]}},
+    {"id":"INV-01","priority":"P0","status":"CAN_XAC_NHAN","sources":["02","kv_morning_report.py"],"question":"Phạm vi reserved và ý nghĩa cảnh báo thiếu?","decision":null},
+    {
+      "id":"RET-01",
+      "priority":"P0",
+      "status":"CAN_XAC_NHAN",
+      "sources":["03 §4","user_reply_2026-10-30","user_returns_followup_2026-10-30","user_sync_disposal_confirmation_2026-10-30"],
+      "question":"Tên ứng dụng/chứng từ; người kiểm tra nhập lại; hình thức lưu phê duyệt hủy; nhóm đích?",
+      "decision":{
+        "confirmedPart":"Công nợ xử lý riêng; thủ kho nhận hàng tài xế trả về, hàng bán tiếp được nhập lại trên ứng dụng và tự cập nhật tồn KiotViet; hàng trả hỏng do Giám đốc duyệt hủy, không nhập tồn trước hủy, thực hiện tiêu hủy và nhắn nhóm hủy hàng",
+        "confirmedBy":"Anh Khoa",
+        "confirmedAt":"2026-10-30",
+        "confirmationScope":"Cách làm hiện tại cho hàng trả về đã xuất hóa đơn",
+        "warehouseScope":"CAO_LANH",
+        "effectiveFrom":null,
+        "receiverRole":"Thủ kho",
+        "resellableReturn":{
+          "actorRole":"Thủ kho",
+          "action":"Nhập kho lại trên ứng dụng",
+          "reasonTemplate":"Nhập hàng từ chi nhánh [tên chi nhánh] trả về với lý do [lý do trả] — đã trừ công nợ",
+          "applicationName":null,
+          "kiotVietDocumentType":null,
+          "inventorySyncAutomatic":true,
+          "checkerRole":null
+        },
+        "unusableReturn":{
+          "action":"Sau khi Giám đốc duyệt hủy, tiêu hủy và nhắn lên nhóm hủy hàng",
+          "approvalRole":"Giám đốc",
+          "inventoryReceiptBeforeDisposal":false,
+          "groupName":null,
+          "groupId":null
+        },
+        "remainingStatus":"CAN_XAC_NHAN"
+      }
+    },
+    {
+      "id":"INV-02",
+      "priority":"P0",
+      "status":"CAN_XAC_NHAN",
+      "sources":["00","01","03","04 §3","user_full_inventory_schedule_2026-10-30","user_count_window_movements_2026-10-30","user_kiet_after_1600_reference_2026-10-30","user_receipt_count_addendum_2026-10-30","user_inventory_adjustment_approval_2026-10-30","user_kiet_adjustment_executor_2026-10-30"],
+      "question":"Lưu bằng chứng/mốc; nhập sau mốc lấy tồn; ai xác nhận kết quả đếm lại và cần đếm lại bao nhiêu lần? Có cần bổ sung dấu vết cho phê duyệt bằng lời nói?",
+      "decision":{
+        "confirmedPart":"Thứ Tư và thứ Bảy, 13:30–17:00, kiểm toàn kho; nhân viên đếm khu mình rồi gửi Kiệt; vẫn nhập, dừng xuất hàng thực tế; kế toán xuất hóa đơn hàng đi buổi sáng trước 16:00, Kiệt lấy tồn KiotViet sau 16:00 làm mốc đối chiếu",
+        "confirmedBy":"Anh Khoa",
+        "confirmedAt":"2026-10-30",
+        "confirmationScope":"Lịch kiểm toàn kho, nhập/xuất thực tế, phân công đếm theo khu/gửi Kiệt, xuất hóa đơn trong lúc kiểm và tồn KiotViet lấy sau 16:00 làm mốc đối chiếu",
+        "inventoryCountSchedule":{
+          "frequency":"weekly",
+          "days":["THỨ 4","THỨ 7"],
+          "scope":"Toàn bộ kho",
+          "startTime":"13:30",
+          "endTime":"17:00",
+          "cutoffTime":null
+        },
+        "movementsDuringCount":{
+          "receiptsAllowed":true,
+          "physicalDispatchAllowed":false,
+          "comparisonBasis":"Số thực tế nhân viên đếm theo khu gửi Kiệt, đối chiếu tồn KiotViet do Kiệt lấy sau 16:00",
+          "receiptRecountProcedure":{
+            "employeePath":"Nhân viên cộng bổ sung theo số nhận thực tế do thủ kho báo rồi gửi Kiệt",
+            "kietPath":"Nếu chênh lệch lớn khớp thông báo nhận hàng của thủ kho trên nhóm nhận hàng, Kiệt tự bổ sung vào biên bản kiểm kho",
+            "kietSupplementTarget":"Biên bản kiểm kho",
+            "largeVarianceThreshold":null,
+            "receivingGroupId":null,
+            "postReferenceReceiptHandling":null,
+            "invariant":"Cùng một lượng hàng nhập chỉ cộng một lần vào kết quả kiểm đếm"
+          },
+          "invoicePostingDuringCount":true,
+          "invoicePostingScope":"Hàng đã đi buổi sáng",
+          "invoicePostingDeadline":"Trước 16:00"
+        },
+        "counterRole":"Nhân viên phụ trách từng khu",
+        "checkerRole":"Anh Kiệt",
+        "countSubmissionRecipient":"Anh Kiệt",
+        "referenceInventory":{
+          "system":"KiotViet",
+          "capturedBy":"Anh Kiệt",
+          "captureAfter":"16:00",
+          "exactCaptureTime":null,
+          "purpose":"Đối chiếu số thực tế sau khi kế toán hoàn tất xuất hóa đơn hàng đi buổi sáng",
+          "evidenceStorageMethod":null
+        },
+        "adjustmentApprovalRole":"Anh Khoa",
+        "adjustmentApprovalScope":"Điều chỉnh tồn KiotViet khi kiểm kho còn lệch sau đối soát và bổ sung hàng nhập",
+        "adjustmentExecutorRole":"Anh Kiệt",
+        "adjustmentApprovalCommunicationMethod":"Nói trực tiếp",
+        "adjustmentApprovalEvidenceMethod":"Không có dấu vết riêng; Anh Khoa nói trực tiếp với Kiệt",
+        "adjustmentApprovalDurableRecord":false,
+        "adjustmentApprovalConfirmedAt":"2026-10-31",
+        "adjustmentSystem":"KiotViet",
+        "adjustmentFunction":"Kiểm kho",
+        "adjustmentAction":"Cân bằng kho",
+        "adjustmentActionGuard":"Chỉ được Cân bằng kho sau khi Anh Khoa đồng ý",
+        "adjustmentFunctionConfirmedAt":"2026-10-31",
+        "varianceRecountRequired":true,
+        "varianceRecountRole":"Nhân viên kho",
+        "varianceRecountTrigger":"Khi có chênh lệch",
+        "varianceRecountSpecificAssignee":null,
+        "varianceRecountRequiredAttempts":null,
+        "varianceRecountConfirmedAt":"2026-10-31",
+        "warehouseScope":"CAO_LANH",
+        "effectiveFrom":null,
+        "remainingStatus":"CAN_XAC_NHAN"
+      }
+    },
+    {"id":"TRANS-01","priority":"P0","status":"CAN_XAC_NHAN","sources":["03 §2","../yagami-knowledge-base/yagami-branch-warehouse-map.json"],"question":"Lịch chuyển, trạng thái đi đường và thiếu/thừa hai đầu?","decision":null},
+    {"id":"ORDER-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["01","03"],"question":"Hồ sơ duyệt sau 07:00, phiên bản cuối tới kho và ngoại lệ sau hạn 16:00/xuất một phần/gộp/xuất lại/hủy?","decision":null},
+    {"id":"PACK-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["02"],"question":"Định nghĩa bao/bịch/thùng và quy đổi?","decision":null},
+    {"id":"EXP-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["02","05"],"question":"HSD theo nhãn, cận date và ngoại lệ FEFO?","decision":null},
+    {"id":"COLD-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["02","05"],"question":"Điều kiện bảo quản, thời gian và bằng chứng nhiệt độ theo hàng?","decision":null},
+    {"id":"HAND-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["01","04"],"question":"Chứng cứ bàn giao và thẩm quyền khi thiếu/sai/từ chối?","decision":null},
+    {"id":"REPORT-01","priority":"P0","status":"CAN_XAC_NHAN","sources":["01","03","kv_morning_report.py"],"question":"Đối chiếu đơn–hóa đơn và mốc xuất trước 16:00 khi có ngoại lệ; snapshot, phiên bản lịch, mốc đồng bộ và xác nhận gửi?","decision":null},
+    {"id":"PEOPLE-01","priority":"P2","status":"CAN_XAC_NHAN","sources":["00 §4","05 câu 7"],"question":"Phạm vi và hồ sơ phê duyệt tiêu chí đánh giá nhân sự?","decision":null},
+    {"id":"DATA-01","priority":"P1","status":"CAN_XAC_NHAN","sources":["MANIFEST.json","../yagami-knowledge-base/KNOWLEDGE_MANIFEST.json"],"question":"Nguồn phê duyệt, ngày hiệu lực và thống nhất version?","decision":null}
+  ]
+}

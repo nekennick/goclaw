@@ -1,0 +1,264 @@
+{
+  "createdAt": "2026-10-31",
+  "vaultScopes": [
+    {
+      "id": "01a1900e-ab0b-749c-9808-af69babace6c",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/00-TONG-QUAN-NHAN-SU-VA-NOI-QUY.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "71604f0fc3d42635ec9d4c8545813ce70e08e6ab4fb0a91ef5e016dd0493f99e"
+    },
+    {
+      "id": "01a1900e-ab10-7017-ba03-48b32b9774f0",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/02-DONG-GOI-BAO-QUAN-VA-4-MA-SIET-TON.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "10e836d649acc36150375b53a90dd50bce1ba99f027fed1dc720b144efc4df1c"
+    },
+    {
+      "id": "01a1900e-ab2f-7aad-92d5-8b3fd05d4ec9",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base/README.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "b5d003c7d242b998574e5e53a095a9a29440693f9aaf766312ec647bbffdf01a"
+    },
+    {
+      "id": "01a1900e-ab1f-7bdd-9fcf-9ba994b0b6fb",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/08-NHAT-KY-RA-SOAT-VA-CAU-HOI.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "52a231a4d4f3b70fde0192b33587704ec98c5d55a78c4b9e5d4ad1751a03fa1a"
+    },
+    {
+      "id": "01a1900e-ab23-76d4-876d-ce77634bf019",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/MANIFEST.json",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "fb31d3eccba313b039005951d1d7d146d47162e0d91bcb0c0c4dbf1b360d73cb"
+    },
+    {
+      "id": "01a1900e-ab17-7e8d-b424-cceb86a42fc5",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/05-BO-CAU-HOI-SAT-HACH-NHAN-VIEN-MOI.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "cd3a0e15e012fe36950be68ad67ce2e252b14fe174b6a9bf6fd8a106b6a22471"
+    },
+    {
+      "id": "01a1900e-ab1a-70b5-98ee-306d0997bc3a",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/06-QUAN-TRI-DU-LIEU-VA-TU-DIEN.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "d11234c956dbf37ff942beac5ba3f37e85e9fff176cc16e080593219245d110d"
+    },
+    {
+      "id": "01a1900e-ab1b-7cbe-8647-36b6ac65857a",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/07-DANH-MUC-VAN-DE-CAN-XAC-NHAN.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "b6bb795dad8da79ef398808b5bea03deb8e15a16b31148b5ff59265fcfd3bd1c"
+    },
+    {
+      "id": "01a1900e-ab26-7800-a3cf-873511ba7f41",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/README.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "f83873d94dd5cc06b0783f58096c85f7ffc88b6156c36fe158c9be84152bd919"
+    },
+    {
+      "id": "01a1900e-ab29-7731-83fc-f23a184d7860",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/RULE_REGISTER.json",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "e5b488da8e5bb504be9a74f0e554f8524f9818f4761519aeb694a90ab055abac"
+    },
+    {
+      "id": "01a1900e-ab2c-7afe-81a8-c264fef62ba2",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base/KNOWLEDGE_MANIFEST.json",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "1f72b1cede2539615bc844a9147ad058d0158abee7ef0b27ee77407442b4e41e"
+    },
+    {
+      "id": "01a1900e-ab15-7ce3-9233-ee6bc04f9ead",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/04-CAM-NANG-XU-LY-SU-CO-VA-GIAO-VAN.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "2bdff85dcc1b0edf91f1bff41ad7042309619e23f6b8afc97e6efc3da16ced86"
+    },
+    {
+      "id": "01a1900e-ab36-7719-a26f-b7327f69bbea",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base/yagami-branches.csv",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "7980ddf693c74bc0e40d1d8b1ae66a5fab3dddb4d53c3c1e06d37604c9dfc25f"
+    },
+    {
+      "id": "01a1900e-ab11-7b55-946c-78a0a76e9815",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/03-QUY-TRINH-KIOTVIET-CHUYEN-KHO-VA-DOI-TRA.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "0f8b00ceea0fa321f3c2c7300b2d66a3fcf5a7e83de04fe58619447e40ce1f7c"
+    },
+    {
+      "id": "01a1900e-ab0d-7aee-90cc-c66d35860036",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base/01-TIMELINE-NHIP-VAN-HANH-HANG-NGAY.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "7f2e8b74c0a012f7b3d9994a82097d45a3035fed0c7c312ffb8b4f51e83f4724"
+    },
+    {
+      "id": "01a1900e-ab31-7c16-9edf-79c0e2465d0b",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base/yagami-branch-warehouse-map.json",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "afb52bffc9dc66b51bb47fe4b4aba068419ccc2c0781ee4e3dc4344eb5ce4a77"
+    },
+    {
+      "id": "01a1900e-ab33-76f7-8f10-2d8d6de82649",
+      "path": "quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base/yagami-branch-warehouse-map.md",
+      "scope": "personal",
+      "chatId": null,
+      "teamId": null,
+      "agentId": "019ec947-8f55-70fe-8a81-11975e921399",
+      "tenantId": "0193a5b0-7000-7000-8000-000000000001",
+      "contentHash": "55d2d907b790f41a9b879f82f00e7ffdbf59e337e5744c6643e1b5d71b28d845"
+    }
+  ],
+  "existingAgents": [
+    {
+      "id": "019ec947-8f55-70fe-8a81-11975e921399",
+      "key": "quan-ly-kim",
+      "fingerprint": "ab3423270d8f219582addd33de824057"
+    },
+    {
+      "id": "01a15d37-8dbb-7bfc-b23d-26021eed5b6f",
+      "key": "test-hep-po",
+      "fingerprint": "fb4a447bedfdea0c62442b640138eb98"
+    }
+  ],
+  "contextFingerprints": [
+    {
+      "file": "AGENTS_CORE.md",
+      "hash": "d6b9c1904fe7b156a846bd51a91930e8",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "AGENTS_TASK.md",
+      "hash": "ffc780497c070b5b076e81b04ac227bc",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "CAPABILITIES.md",
+      "hash": "f221c07082323cad51c059594d85f1db",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "USER_PREDEFINED.md",
+      "hash": "da7c4ff424f2586531d0f6169a292aa2",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "SOUL.md",
+      "hash": "cdbac5320f735a92b4b5c2e98c2be2d5",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "AGENTS.md",
+      "hash": "89efc5f6d515c93bc170c7aa69cc8ad3",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "IDENTITY.md",
+      "hash": "5266332d5c5291f5673d37ca1d883d46",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "HEARTBEAT.md",
+      "hash": "dedb880151b74e2c03bb237c213c04d9",
+      "agentKey": "quan-ly-kim"
+    },
+    {
+      "file": "SOUL.md",
+      "hash": "5d289c522759a1dda6c291a36e44c96d",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "CAPABILITIES.md",
+      "hash": "0fd1cf42852b246260af55dc02c4f2e0",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "AGENTS.md",
+      "hash": "4c4b1a779970aaeb71786469a9a2dc52",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "IDENTITY.md",
+      "hash": "49f2413bf56495916ba8caf4520cd08b",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "AGENTS_CORE.md",
+      "hash": "d6b9c1904fe7b156a846bd51a91930e8",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "AGENTS_TASK.md",
+      "hash": "ffc780497c070b5b076e81b04ac227bc",
+      "agentKey": "test-hep-po"
+    },
+    {
+      "file": "USER_PREDEFINED.md",
+      "hash": "76aa82832e14f0b178ade8f82e5bcbd1",
+      "agentKey": "test-hep-po"
+    }
+  ]
+}

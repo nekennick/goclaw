@@ -22,6 +22,17 @@ func init() {
 		// Vault orphan collision on agent delete (#1550)
 		MsgAgentDeleteVaultConflict: "failed to delete agent: a vault document of this agent is at a path another deleted owner already orphaned; delete or re-path this agent's vault documents first, or upgrade to schema version 99 or later",
 
+		// Vault scope updates
+		MsgVaultContentScopeSeparate:     "content and scope assignment must be updated separately",
+		MsgVaultInvalidScope:             "invalid scope",
+		MsgVaultTeamScopeRequired:        "team_id requires team scope",
+		MsgVaultScopeOwnerOnly:           "only owner can change document scope or team assignment",
+		MsgVaultPersonalOwnerRequired:    "personal scope requires an explicit agent owner target; this endpoint does not support assigning one",
+		MsgVaultScopeConflict:            "document already exists in the target scope",
+		MsgVaultUpdateFailed:             "failed to update document",
+		MsgVaultUpdateConflict:           "document changed or is no longer available; refresh before updating",
+		MsgVaultContentUpdateUnavailable: "safe document content updates are unavailable with this store",
+
 		// Agent
 		MsgAgentNotFound:                       "agent not found: %s",
 		MsgCannotDeleteDefault:                 "cannot delete the default agent",

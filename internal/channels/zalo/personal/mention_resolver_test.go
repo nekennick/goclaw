@@ -71,18 +71,32 @@ func TestAddZaloReportStyles(t *testing.T) {
 }
 
 func TestStripMarkdownWithStyles(t *testing.T) {
-	plain, styles := stripMarkdownWithStyles("Lưu ý **Mặt sau** và __mã hàng__.")
-	if plain != "Lưu ý Mặt sau và mã hàng." {
+	input := "## Thông tin tổng quan\n### Phân cảnh 1\nLưu ý **mặt sau** và ***điểm cốt lõi***."
+	plain, styles := stripMarkdownWithStyles(input)
+	if !strings.Contains(plain, "Thông tin tổng quan") || !strings.Contains(plain, "mặt sau") || !strings.Contains(plain, "điểm cốt lõi") {
 		t.Fatalf("plain = %q", plain)
 	}
-	if len(styles) != 4 {
-		t.Fatalf("styles = %#v, want two styles per bold span", styles)
+
+	// H2 -> green + bold
+	// H3 -> orange + bold
+	// **mặt sau** -> bold
+	// ***điểm cốt lõi*** -> orange + bold
+	hasGreen := false
+	hasOrange := false
+	hasBold := false
+	for _, st := range styles {
+		if st.Style == "c_15a85f" {
+			hasGreen = true
+		}
+		if st.Style == "c_f27806" {
+			hasOrange = true
+		}
+		if st.Style == "b" {
+			hasBold = true
+		}
 	}
-	if styles[0].Style != "c_f27806" || styles[1].Style != "b" {
-		t.Fatalf("first styles = %#v", styles[:2])
-	}
-	if styles[2].Start <= styles[0].Start {
-		t.Fatalf("second span did not advance: %#v", styles)
+	if !hasGreen || !hasOrange || !hasBold {
+		t.Fatalf("missing expected styles: green=%v, orange=%v, bold=%v, styles=%#v", hasGreen, hasOrange, hasBold, styles)
 	}
 }
 
@@ -98,6 +112,24 @@ func TestSplitMentionResolutionPrefersNaturalBoundaries(t *testing.T) {
 		if i < len(chunks)-1 && !strings.HasSuffix(chunk.text, " ") && !strings.HasSuffix(chunk.text, "\n") {
 			t.Fatalf("chunk %d ends inside a word: %q", i, chunk.text)
 		}
+	}
+	if rebuilt.String() != text {
+		t.Fatalf("rebuilt = %q, want %q", rebuilt.String(), text)
+	}
+}
+
+func TestSplitMentionResolutionAvoidsTinyFinalBubble(t *testing.T) {
+	text := strings.Repeat("dong bao cao co du lieu\n", 24) + "Ket thuc."
+	chunks := splitMentionResolution(mentionResolution{text: text}, 500)
+	if len(chunks) < 2 {
+		t.Fatalf("chunks = %d, want multiple", len(chunks))
+	}
+	if got := len(chunks[len(chunks)-1].text); got < 80 {
+		t.Fatalf("final chunk is an unreadable fragment (%d bytes): %q", got, chunks[len(chunks)-1].text)
+	}
+	var rebuilt strings.Builder
+	for _, chunk := range chunks {
+		rebuilt.WriteString(chunk.text)
 	}
 	if rebuilt.String() != text {
 		t.Fatalf("rebuilt = %q, want %q", rebuilt.String(), text)

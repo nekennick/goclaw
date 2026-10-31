@@ -1,7 +1,10 @@
 package http
 
 import (
+	"context"
+	"database/sql"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,9 +14,127 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nextlevelbuilder/goclaw/internal/eventbus"
+	"github.com/nextlevelbuilder/goclaw/internal/i18n"
 	"github.com/nextlevelbuilder/goclaw/internal/store"
 	"github.com/nextlevelbuilder/goclaw/internal/vault"
 )
+
+// Optional capability: stores validate CAS and constraints under their DB lock
+// before writing content, then restore disk on callback/commit failure. Keeping
+// it separate leaves metadata-only VaultStore implementations source-compatible.
+type vaultContentUpdater interface {
+	UpsertDocumentWithContent(context.Context, *store.VaultDocument, func() (func() error, error)) error
+}
+
+// writeDocumentContentWithRestore snapshots bytes only inside the workspace.
+// The returned undo is independent of request cancellation and is also returned
+// after a partial write error, so the store can restore before releasing its lock.
+func (h *VaultHandler) writeDocumentContentWithRestore(workspace, relPath string, content []byte) (func() error, error) {
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		return nil, err
+	}
+	realWS, err := filepath.EvalSymlinks(workspace)
+	if err != nil {
+		return nil, err
+	}
+	target := filepath.Join(realWS, filepath.Clean(relPath))
+	inside := func(path string) bool {
+		return path != realWS && strings.HasPrefix(path, realWS+string(os.PathSeparator))
+	}
+	if !inside(target) {
+		return nil, os.ErrInvalid
+	}
+	root, err := os.OpenRoot(realWS)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := root.Close(); err != nil {
+			slog.Warn("vault.content snapshot root close failed", "error", err)
+		}
+	}()
+	rootInfo, err := root.Stat(".")
+	if err != nil {
+		return nil, err
+	}
+	var previous []byte
+	existed := false
+	// Lstat before any resolution/open: even a dangling symlink is an
+	// existing entry, never an absent file that an undo may safely remove.
+	entry, err := root.Lstat(relPath)
+	switch {
+	case err == nil:
+		if !entry.Mode().IsRegular() {
+			return nil, os.ErrInvalid
+		}
+		// Root confines ancestor symlinks; O_NOFOLLOW closes the final-entry
+		// replacement race on Unix. Verify the opened handle, not just Lstat.
+		f, err := root.OpenFile(relPath, os.O_RDONLY|oNoFollow, 0)
+		if err != nil {
+			return nil, err
+		}
+		fi, statErr := f.Stat()
+		if statErr != nil || !fi.Mode().IsRegular() {
+			return nil, errors.Join(statErr, os.ErrInvalid, f.Close())
+		}
+		previous, err = io.ReadAll(f)
+		closeErr := f.Close()
+		if err != nil || closeErr != nil {
+			return nil, errors.Join(err, closeErr)
+		}
+		existed = true
+	case !os.IsNotExist(err):
+		return nil, err
+	}
+	restore := func() error {
+		restoreRoot, err := os.OpenRoot(realWS)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := restoreRoot.Close(); err != nil {
+				slog.Warn("vault.content restore root close failed", "error", err)
+			}
+		}()
+		// Do not restore into a replacement workspace after a directory swap.
+		currentRootInfo, err := restoreRoot.Stat(".")
+		if err != nil {
+			return err
+		}
+		if !os.SameFile(rootInfo, currentRootInfo) {
+			return os.ErrInvalid
+		}
+		if existed {
+			f, err := restoreRoot.OpenFile(relPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|oNoFollow, 0o644)
+			if err != nil {
+				return err
+			}
+			_, writeErr := f.Write(previous)
+			return errors.Join(writeErr, f.Close())
+		}
+		// Root.Remove confines ancestor resolution, unlike check-then-Remove.
+		if err := restoreRoot.Remove(relPath); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	}
+	// Keep the actual write under the same confined root as the snapshot.
+	// For an absent target, O_EXCL must not overwrite an entry created after
+	// the snapshot (and its undo must never remove that other entry).
+	if err := root.MkdirAll(filepath.Dir(relPath), 0o755); err != nil {
+		return nil, err
+	}
+	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC | oNoFollow
+	if !existed {
+		flags |= os.O_EXCL
+	}
+	f, err := root.OpenFile(relPath, flags, 0o644)
+	if err != nil {
+		return nil, err
+	}
+	_, writeErr := f.Write(content)
+	return restore, errors.Join(writeErr, f.Close())
+}
 
 // writeDocumentContent writes the given content bytes to a tenant-workspace-
 // relative path, after validating the path stays inside the workspace and uses
@@ -281,7 +402,7 @@ func (h *VaultHandler) handleCreateDocument(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if !validScope(body.Scope) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid scope"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgVaultInvalidScope)})
 		return
 	}
 	// Validate extension upfront if caller wants to write content — matches the
@@ -402,38 +523,103 @@ func (h *VaultHandler) handleUpdateDocument(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Scope moves are metadata-only: a later namespace collision must never
+	// leave rewritten file bytes behind. Even an unchanged scope field must
+	// be omitted from a content request.
+	if body.Content != nil && (body.Scope != nil || body.TeamID != nil) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgVaultContentScopeSeparate)})
+		return
+	}
+	if body.Scope != nil && !validScope(*body.Scope) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgVaultInvalidScope)})
+		return
+	}
+	// Work on a detached value; rejected validation must not mutate a row
+	// returned by an in-memory store or another caller-owned implementation.
+	next := *existing
+	existing = &next
+	targetScope := existing.Scope
+	if body.Scope != nil {
+		targetScope = *body.Scope
+	}
+	if body.TeamID != nil {
+		if *body.TeamID != "" {
+			if body.Scope != nil && targetScope != "team" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgVaultTeamScopeRequired)})
+				return
+			}
+			targetScope = "team"
+		} else if body.Scope == nil {
+			targetScope = "personal"
+		}
+	}
+	scopeChanged := targetScope != existing.Scope
+	teamChanged := body.TeamID != nil && ((existing.TeamID == nil && *body.TeamID != "") || (existing.TeamID != nil && *existing.TeamID != *body.TeamID))
+	// Keep the existing owner-only reassignment policy for all namespace
+	// changes, not just team_id. RoleAdmin alone is not a tenant-admin check;
+	// this handler has no TenantStore to verify tenant administration.
+	if (scopeChanged || teamChanged) && !store.IsOwnerRole(r.Context()) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": i18n.T(locale, i18n.MsgVaultScopeOwnerOnly)})
+		return
+	}
+	if body.Scope != nil || body.TeamID != nil {
+		switch targetScope {
+		case "shared":
+			if scopeChanged || teamChanged {
+				existing.AgentID, existing.TeamID, existing.ChatID = nil, nil, nil
+			}
+		case "personal":
+			// PUT does not accept an agent owner target. Never infer one from
+			// the route (which is only an access filter), or restore a lost owner.
+			if existing.AgentID == nil || *existing.AgentID == "" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgVaultPersonalOwnerRequired)})
+				return
+			}
+			if scopeChanged || teamChanged {
+				existing.TeamID, existing.ChatID = nil, nil
+			}
+		case "team":
+			targetTeam := existing.TeamID
+			if body.TeamID != nil {
+				targetTeam = body.TeamID
+			}
+			if targetTeam == nil || *targetTeam == "" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgRequired, "team_id")})
+				return
+			}
+			// Validate before the owner/nil-store membership bypass.
+			tid, err := uuid.Parse(*targetTeam)
+			if err != nil || tid == uuid.Nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": i18n.T(locale, i18n.MsgInvalidID, "team")})
+				return
+			}
+			if !h.validateTeamMembership(r.Context(), w, *targetTeam) {
+				return
+			}
+			existing.AgentID, existing.TeamID = nil, targetTeam
+			if scopeChanged || teamChanged {
+				existing.ChatID = nil
+			}
+		}
+		existing.Scope = targetScope
+	}
+
 	if body.Title != nil {
 		existing.Title = *body.Title
 	}
 	if body.DocType != nil {
 		existing.DocType = *body.DocType
 	}
-	if body.Scope != nil {
-		existing.Scope = *body.Scope
-	}
-	if body.TeamID != nil {
-		// Only owner/admin can change team assignment.
-		if !store.IsOwnerRole(r.Context()) {
-			writeJSON(w, http.StatusForbidden, map[string]string{"error": "only owner can change document team assignment"})
-			return
-		}
-		if *body.TeamID == "" {
-			existing.TeamID = nil
-			existing.Scope = "personal"
-		} else {
-			existing.TeamID = body.TeamID
-			existing.Scope = "team"
-		}
-	}
 	if body.Metadata != nil {
 		existing.Metadata = body.Metadata
 	}
 
-	// Rewrite content on disk when caller supplied a `content` field.
+	// Content writes must run only after the store validates CAS under lock.
 	var (
 		wsPath        string
 		writtenHash   string
 		contentWasSet bool
+		updateErr     error
 	)
 	if body.Content != nil {
 		ext := strings.ToLower(filepath.Ext(existing.Path))
@@ -446,24 +632,43 @@ func (h *VaultHandler) handleUpdateDocument(w http.ResponseWriter, r *http.Reque
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "workspace not available"})
 			return
 		}
-		hash, werr := h.writeDocumentContent(wsPath, existing.Path, []byte(*body.Content))
-		if werr != nil {
-			slog.Warn("vault.update: write content failed", "path", existing.Path, "error", werr)
-			if errors.Is(werr, os.ErrInvalid) {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "path escapes workspace"})
-				return
-			}
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to write content"})
+		updater, ok := h.store.(vaultContentUpdater)
+		if !ok {
+			// Never fall back to write-before-CAS with an older implementation.
+			writeJSON(w, http.StatusNotImplemented, map[string]string{"error": i18n.T(locale, i18n.MsgVaultContentUpdateUnavailable)})
 			return
 		}
-		existing.ContentHash = hash
-		writtenHash = hash
+		content := []byte(*body.Content)
+		writtenHash = vault.ContentHash(content)
+		existing.ContentHash = writtenHash
+		updateErr = updater.UpsertDocumentWithContent(r.Context(), existing, func() (func() error, error) {
+			// No store calls from this callback: the store holds its row/write lock.
+			return h.writeDocumentContentWithRestore(wsPath, existing.Path, content)
+		})
 		contentWasSet = true
+	} else {
+		updateErr = h.store.UpsertDocument(r.Context(), existing)
 	}
 
-	if err := h.store.UpsertDocument(r.Context(), existing); err != nil {
+	if err := updateErr; err != nil {
 		slog.Warn("vault.update failed", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		// Preserve the fetched UpdatedAt CAS token through the metadata edit.
+		// Both stores wrap ErrNoRows for stale/missing ID updates. Never retry
+		// without the token: that could restore obsolete scope or ownership.
+		if errors.Is(err, sql.ErrNoRows) {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": i18n.T(locale, i18n.MsgVaultUpdateConflict)})
+			return
+		}
+		// Inspect typed/wrapped driver errors without leaking DB details or
+		// matching fragile error strings. Both store implementations wrap errors.
+		var pgErr interface{ SQLState() string }
+		var sqliteErr interface{ Code() int }
+		if (errors.As(err, &pgErr) && pgErr.SQLState() == "23505") ||
+			(errors.As(err, &sqliteErr) && (sqliteErr.Code() == 2067 || sqliteErr.Code() == 1555)) {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": i18n.T(locale, i18n.MsgVaultScopeConflict)})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": i18n.T(locale, i18n.MsgVaultUpdateFailed)})
 		return
 	}
 

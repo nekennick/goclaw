@@ -6,7 +6,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 	"time"
@@ -47,9 +49,15 @@ func NewSQLiteVaultStore(db *sql.DB) *SQLiteVaultStore {
 func (s *SQLiteVaultStore) SetEmbeddingProvider(_ store.EmbeddingProvider) {} // no-op
 func (s *SQLiteVaultStore) Close() error                                   { return nil }
 
-// UpsertDocument inserts or updates a vault document.
+// UpsertDocument updates a supplied ID, or upserts by path when ID is empty.
+// UpdatedAt is required for supplied IDs. Missing/stale IDs or tokens wrap
+// sql.ErrNoRows; callers must re-read rather than retry with a cleared token.
 // Uses ON CONFLICT DO UPDATE (never INSERT OR REPLACE — preserves FK cascades to vault_links).
 func (s *SQLiteVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultDocument) error {
+	return s.upsertDocument(ctx, doc, nil)
+}
+
+func (s *SQLiteVaultStore) upsertDocument(ctx context.Context, doc *store.VaultDocument, write func() (func() error, error)) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	id := uuid.Must(uuid.NewV7()).String()
 
@@ -74,6 +82,59 @@ func (s *SQLiteVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultD
 	if doc.PathBasename == "" && doc.Path != "" {
 		doc.PathBasename = ComputeAttachmentBaseName(doc.Path)
 	}
+	if doc.ID != "" {
+		if doc.UpdatedAt.IsZero() {
+			return fmt.Errorf("vault update document: snapshot token required: %w", sql.ErrNoRows)
+		}
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		defer func() {
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				slog.Warn("vault update rollback failed", "error", err)
+			}
+		}()
+		// Keep the exact stored text for the atomic predicate: older rows can
+		// use a different timestamp representation than RFC3339Nano.
+		var previousRaw string
+		var previousUpdatedAt sqliteTime
+		err = tx.QueryRowContext(ctx, `SELECT updated_at, updated_at FROM vault_documents
+			WHERE id = ? AND tenant_id = ?`, doc.ID, doc.TenantID).Scan(&previousRaw, &previousUpdatedAt)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		if !doc.UpdatedAt.Equal(previousUpdatedAt.Time) {
+			return fmt.Errorf("vault update document: missing or stale document: %w", sql.ErrNoRows)
+		}
+		next := time.Now().UTC()
+		if !next.After(previousUpdatedAt.Time) {
+			next = previousUpdatedAt.Time.Add(time.Nanosecond)
+		}
+		now = next.Format(time.RFC3339Nano)
+		// Recompute on updates: a fetched document can carry a stale basename
+		// after a rename. Explicit nullable ownership/chat values are authoritative.
+		basename := ComputeAttachmentBaseName(doc.Path)
+		var actualID string
+		err = tx.QueryRowContext(ctx, `UPDATE vault_documents SET
+			agent_id = ?, team_id = ?, chat_id = ?, scope = ?, custom_scope = ?,
+			path = ?, path_basename = ?, title = ?, doc_type = ?, content_hash = ?,
+			summary = ?, metadata = ?, updated_at = ?
+			WHERE id = ? AND tenant_id = ? AND updated_at = ? RETURNING id`,
+			agentIDVal, doc.TeamID, chatIDVal, doc.Scope, doc.CustomScope,
+			doc.Path, basename, doc.Title, doc.DocType, doc.ContentHash,
+			doc.Summary, string(meta), now, doc.ID, doc.TenantID, previousRaw).Scan(&actualID)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		if err := commitVaultContent(tx, write); err != nil {
+			return err
+		}
+		doc.PathBasename = basename
+		doc.UpdatedAt = next
+		return nil
+	}
+	var insertedUpdatedAt sqliteTime
 	err = s.db.QueryRowContext(ctx, `
 		INSERT INTO vault_documents
 			(id, tenant_id, agent_id, team_id, chat_id, scope, custom_scope, path, path_basename, title, doc_type, content_hash, summary, metadata, created_at, updated_at)
@@ -88,13 +149,14 @@ func (s *SQLiteVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultD
 			chat_id       = COALESCE(excluded.chat_id, vault_documents.chat_id),
 			tenant_id     = excluded.tenant_id,
 			updated_at    = excluded.updated_at
-		RETURNING id`,
+		RETURNING id, updated_at`,
 		id, doc.TenantID, agentIDVal, doc.TeamID, chatIDVal, doc.Scope, doc.CustomScope,
 		doc.Path, doc.PathBasename, doc.Title, doc.DocType, doc.ContentHash, doc.Summary, string(meta), now, now,
-	).Scan(&doc.ID)
+	).Scan(&doc.ID, &insertedUpdatedAt)
 	if err != nil {
 		return fmt.Errorf("vault upsert document: %w", err)
 	}
+	doc.UpdatedAt = insertedUpdatedAt.Time
 	return nil
 }
 

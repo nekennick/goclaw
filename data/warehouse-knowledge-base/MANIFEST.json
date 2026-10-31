@@ -1,0 +1,142 @@
+{
+  "name": "Yagami Warehouse Onboarding Knowledge Base",
+  "version": "1.0.1-review.15",
+  "status": "review_in_progress",
+  "baseVersion": "1.0.0",
+  "reviewedAt": "2026-10-31",
+  "verificationScope": "verifiedAt is inherited from v1.0.0; it is not approval of all rules. See RULE_REGISTER.json for per-topic status and partial confirmations.",
+  "approvedAt": null,
+  "approvedBy": null,
+  "verifiedAt": "2026-10-30",
+  "owner": "Anh Khoa",
+  "operatingScope": {
+    "warehouseKey": "CAO_LANH",
+    "warehouseName": "Kho Cao Lãnh",
+    "rolloutStage": "pilot",
+    "appliesAutomaticallyToBinhDuong": false,
+    "confirmedBy": "Anh Khoa",
+    "confirmedAt": "2026-10-30",
+    "effectiveFrom": null,
+    "ruleId": "SCOPE-01"
+  },
+  "keyPersons": {
+    "director": "Anh Khoa",
+    "chiefAccountant": "Chị Phượng",
+    "inventoryAuditor": "Anh Kiệt",
+    "warehouseHeads": [
+      "Tuyền",
+      "Nhân"
+    ],
+    "nightGuards": [
+      "Tín",
+      "Tình",
+      "Tuyền"
+    ]
+  },
+  "warehouseLayoutUrl": "http://ygm-so-so-kho.vercel.app",
+  "files": [
+    "00-TONG-QUAN-NHAN-SU-VA-NOI-QUY.md",
+    "01-TIMELINE-NHIP-VAN-HANH-HANG-NGAY.md",
+    "02-DONG-GOI-BAO-QUAN-VA-4-MA-SIET-TON.md",
+    "03-QUY-TRINH-KIOTVIET-CHUYEN-KHO-VA-DOI-TRA.md",
+    "04-CAM-NANG-XU-LY-SU-CO-VA-GIAO-VAN.md",
+    "05-BO-CAU-HOI-SAT-HACH-NHAN-VIEN-MOI.md",
+    "README.md",
+    "06-QUAN-TRI-DU-LIEU-VA-TU-DIEN.md",
+    "07-DANH-MUC-VAN-DE-CAN-XAC-NHAN.md",
+    "08-NHAT-KY-RA-SOAT-VA-CAU-HOI.md",
+    "RULE_REGISTER.json"
+  ],
+  "recommendedReadOrder": [
+    "README.md",
+    "06-QUAN-TRI-DU-LIEU-VA-TU-DIEN.md",
+    "07-DANH-MUC-VAN-DE-CAN-XAC-NHAN.md",
+    "RULE_REGISTER.json",
+    "00-TONG-QUAN-NHAN-SU-VA-NOI-QUY.md",
+    "01-TIMELINE-NHIP-VAN-HANH-HANG-NGAY.md",
+    "02-DONG-GOI-BAO-QUAN-VA-4-MA-SIET-TON.md",
+    "03-QUY-TRINH-KIOTVIET-CHUYEN-KHO-VA-DOI-TRA.md",
+    "04-CAM-NANG-XU-LY-SU-CO-VA-GIAO-VAN.md",
+    "05-BO-CAU-HOI-SAT-HACH-NHAN-VIEN-MOI.md",
+    "08-NHAT-KY-RA-SOAT-VA-CAU-HOI.md"
+  ],
+  "ruleRegister": "RULE_REGISTER.json",
+  "originalBackupPath": "../.warehouse-kb-backups/v1.0.0-before-review-20261030/",
+  "changeLog": [
+    {
+      "version": "1.0.1-review.15",
+      "date": "2026-10-31",
+      "change": "Owner confirmed warehouse staff recount physical stock when a variance is found, before escalation for approval and KiotViet warehouse balancing. Updated operating flow, training, governance and rule register; no individual recount assignee or mandatory recount count was inferred."
+    },
+    {
+      "version": "1.0.1-review.14",
+      "date": "2026-10-31",
+      "change": "Owner confirmed Kiet uses KiotViet's inventory-count function and may execute the warehouse-balance action only after Anh Khoa gives verbal approval. Updated authority, operating flow, training, data governance and rule register without changing KiotViet or application code."
+    },
+    {
+      "version": "1.0.1-review.13",
+      "date": "2026-10-31",
+      "change": "Owner confirmed KiotViet inventory-adjustment approval is communicated verbally in person from Anh Khoa to Kiet. Updated operating text, training and register; recorded that this method leaves no durable approval record unless a separate traceability control is later adopted."
+    },
+    {
+      "version": "1.0.1-review.12",
+      "date": "2026-10-30",
+      "change": "Owner confirmed Kiet performs KiotViet inventory adjustments after Anh Khoa approves in the Cao Lanh pilot. Updated authority, operating text, training and register; approval evidence location remains pending."
+    },
+    {
+      "version": "1.0.1-review.11",
+      "date": "2026-10-30",
+      "change": "Owner confirmed this operating procedure is a pilot at Cao Lanh warehouse. Added explicit scope to documents, training and metadata; excluded automatic rollout to Binh Duong and kept trial start date unspecified."
+    },
+    {
+      "version": "1.0.1-review.10",
+      "date": "2026-10-30",
+      "change": "Owner confirmed Anh Khoa approves KiotViet inventory adjustments for residual count differences after reconciliation. Updated authority, operational documents, training and rule register; adjustment executor and approval evidence remain pending."
+    },
+    {
+      "version": "1.0.1-review.9",
+      "date": "2026-10-30",
+      "change": "Owner confirmed receipt addenda: staff add actual received quantities reported by warehouse keeper and send to Kiet; alternatively Kiet supplements the count record when a large variance matches receiving-group notifications. Distinguished count-record supplementation from KiotViet inventory adjustment and prevented double counting."
+    },
+    {
+      "version": "1.0.1-review.8",
+      "date": "2026-10-30",
+      "change": "Owner confirmed staff count assigned zones from 13:30 and send physical counts to Kiet; accounting continues invoicing morning dispatches before 16:00, and Kiet uses KiotViet inventory captured after 16:00 as the reconciliation reference. Updated roles, operating text, training and register. Receipt-after-count handling remains pending."
+    },
+    {
+      "version": "1.0.1-review.7",
+      "date": "2026-10-30",
+      "change": "Owner confirmed full inventory count window 13:30–17:00 on Wednesdays/Saturdays, continued receipts, no goods dispatch during counting, and comparison of complete physical counts against latest warehouse data. Reconciliation mechanics, invoice posting during count and role assignments remain pending."
+    },
+    {
+      "version": "1.0.1-review.6",
+      "date": "2026-10-30",
+      "change": "Owner confirmed full-warehouse inventory counts every Wednesday and Saturday. Updated operational documents, training, glossary and register. Exact hours, movement handling, responsibilities and warehouse-site scope remain pending."
+    },
+    {
+      "version": "1.0.1-review.5",
+      "date": "2026-10-30",
+      "change": "Owner defined completed order processing as issuing invoices from customer orders (temporary orders), to finish before 16:00. Updated operational documents, training, glossary and register; removed outstanding questions about the basic definition. Exception handling and actual inventory-count schedule remain pending."
+    },
+    {
+      "version": "1.0.1-review.4",
+      "date": "2026-10-30",
+      "change": "Owner corrected 16:00 as the deadline before which all customer orders of the day must be fully processed, not an inventory-count time. Removed erroneous count schedule; updated roles, timeline, incident guide, training, glossary and rule register. Completion criteria and actual count schedule remain pending."
+    },
+    {
+      "version": "1.0.1-review.3",
+      "date": "2026-10-30",
+      "change": "Owner confirmed automatic KiotViet inventory update from application receipts and director approval for unusable returned goods disposal, without inventory receipt before disposal. Updated operational text, role description, training and rule register."
+    },
+    {
+      "version": "1.0.1-review.2",
+      "date": "2026-10-30",
+      "change": "Recorded owner's returns follow-up: warehouse keeper receives driver returns, re-enters resellable goods in the application with branch/reason/debt-adjustment note; unusable goods are destroyed and reported to the disposal group. KiotViet synchronization, checks and disposal approval remain pending."
+    },
+    {
+      "version": "1.0.1-review.1",
+      "date": "2026-10-30",
+      "change": "Added data governance, glossary, 15 review topics and partial owner confirmation for returns. Clarified FEFO wording and canonical MYG display. Operational decisions remain pending."
+    }
+  ]
+}

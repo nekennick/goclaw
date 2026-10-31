@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"strings"
 	"log/slog"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,8 +71,14 @@ func optAgentUUID(agentID *string) (*uuid.UUID, error) {
 	return &u, nil
 }
 
-// UpsertDocument inserts or updates a vault document.
+// UpsertDocument updates a supplied ID, or upserts by path when ID is empty.
+// UpdatedAt is required for supplied IDs. Missing/stale IDs or tokens wrap
+// sql.ErrNoRows; callers must re-read rather than retry with a cleared token.
 func (s *PGVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultDocument) error {
+	return s.upsertDocument(ctx, doc, nil)
+}
+
+func (s *PGVaultStore) upsertDocument(ctx context.Context, doc *store.VaultDocument, write func() (func() error, error)) error {
 	tid, err := parseUUID(doc.TenantID)
 	if err != nil {
 		return fmt.Errorf("vault upsert: tenant: %w", err)
@@ -119,6 +126,72 @@ func (s *PGVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultDocum
 		chatID = &c
 	}
 
+	if doc.ID != "" {
+		if doc.UpdatedAt.IsZero() {
+			return fmt.Errorf("vault update document: snapshot token required: %w", sql.ErrNoRows)
+		}
+		docID, err := parseUUID(doc.ID)
+		if err != nil {
+			return fmt.Errorf("vault upsert: document: %w", err)
+		}
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		defer func() {
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				slog.Warn("vault update rollback failed", "error", err)
+			}
+		}()
+		// Ownership-deletion triggers also run on explicit owner changes. Lock
+		// the row and retain its provenance so those triggers cannot turn an
+		// explicit move into an orphan or silently override the requested scope.
+		var provenance *uuid.UUID
+		var previousUpdatedAt time.Time
+		var previousScope string
+		err = tx.QueryRowContext(ctx, `SELECT orphaned_from_id, updated_at, scope FROM vault_documents
+			WHERE id = $1 AND tenant_id = $2 FOR UPDATE`, docID, tid).Scan(&provenance, &previousUpdatedAt, &previousScope)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		if !doc.UpdatedAt.Equal(previousUpdatedAt) {
+			return fmt.Errorf("vault update document: missing or stale document: %w", sql.ErrNoRows)
+		}
+		// PG timestamps have microsecond precision. Always advance the version,
+		// including rapid consecutive writes or a backwards wall-clock adjustment.
+		now = now.Truncate(time.Microsecond)
+		if !now.After(previousUpdatedAt) {
+			now = previousUpdatedAt.Add(time.Microsecond)
+		}
+		// A document explicitly entering an owned/nonshared namespace is live,
+		// not an orphan. Retaining provenance would bypass its destination key.
+		if doc.Scope != "shared" || previousScope != "shared" {
+			provenance = nil
+		}
+		_, err = tx.ExecContext(ctx, `UPDATE vault_documents SET
+			agent_id = $1, team_id = $2, chat_id = $3, scope = $4, custom_scope = $5,
+			path = $6, title = $7, doc_type = $8, content_hash = $9, summary = $10,
+			embedding = COALESCE($11::vector, embedding), metadata = $12, updated_at = $13
+			WHERE id = $14 AND tenant_id = $15`,
+			aid, teamID, chatID, doc.Scope, doc.CustomScope, doc.Path, doc.Title, doc.DocType,
+			doc.ContentHash, doc.Summary, embStr, meta, now, docID, tid)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		// Do not mention agent_id/team_id here: UPDATE OF triggers must not run
+		// again. A unique-key collision in either statement rolls back the move.
+		_, err = tx.ExecContext(ctx, `UPDATE vault_documents SET scope = $1, orphaned_from_id = $2
+			WHERE id = $3 AND tenant_id = $4`, doc.Scope, provenance, docID, tid)
+		if err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		if err := commitVaultContent(tx, write); err != nil {
+			return fmt.Errorf("vault update document: %w", err)
+		}
+		doc.UpdatedAt = now
+		return nil
+	}
+
 	err = s.db.QueryRowContext(ctx, `
 		INSERT INTO vault_documents
 			(id, tenant_id, agent_id, team_id, chat_id, scope, custom_scope, path, title, doc_type, content_hash, summary, embedding, metadata, created_at, updated_at)
@@ -136,15 +209,16 @@ func (s *PGVaultStore) UpsertDocument(ctx context.Context, doc *store.VaultDocum
 			metadata     = EXCLUDED.metadata,
 			chat_id      = COALESCE(EXCLUDED.chat_id, vault_documents.chat_id),
 			tenant_id    = EXCLUDED.tenant_id,
-			updated_at   = EXCLUDED.updated_at
-		RETURNING id`,
+			updated_at   = GREATEST(EXCLUDED.updated_at, vault_documents.updated_at + interval '1 microsecond')
+		RETURNING id, updated_at`,
 		id, tid, aid, teamID, chatID, doc.Scope, doc.CustomScope, doc.Path, doc.Title, doc.DocType,
 		doc.ContentHash, doc.Summary, embStr, meta, now,
-	).Scan(&actualID)
+	).Scan(&actualID, &now)
 	if err != nil {
 		return fmt.Errorf("vault upsert document: %w", err)
 	}
 	doc.ID = actualID.String()
+	doc.UpdatedAt = now
 	return nil
 }
 
@@ -904,4 +978,3 @@ func extractFolderNames(prefix string, deepPaths []string) []string {
 	sort.Strings(folders)
 	return folders
 }
-

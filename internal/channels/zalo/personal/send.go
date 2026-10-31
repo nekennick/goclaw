@@ -13,7 +13,9 @@ import (
 	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo/personal/protocol"
 )
 
-const maxTextLength = 2000
+// Keep a safety margin below the Zalo transport ceiling. It lets reports split
+// at meaningful section boundaries instead of leaving a tiny trailing bubble.
+const maxTextLength = 1600
 
 // Send delivers an outbound message to a Zalo chat.
 func (c *Channel) Send(ctx context.Context, msg bus.OutboundMessage) error {
@@ -97,6 +99,12 @@ func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, c
 		if err != nil {
 			return err
 		}
+		slog.Info("zalo_personal: text sent",
+			"chat_id", chatID,
+			"thread_type", threadType,
+			"bytes", len(chunk.text),
+			"message_id", messageID,
+		)
 		if len(chunk.mentions) > 0 {
 			slog.Info("zalo_personal: native mention text sent",
 				"group_id", chatID,
@@ -108,7 +116,11 @@ func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, c
 	return nil
 }
 
-var nativeBoldMarkdown = regexp.MustCompile(`(?s)(?:\*\*(.+?)\*\*|__(.+?)__)`)
+var (
+	reH1H2          = regexp.MustCompile(`(?m)^#{1,2}\s+(.+)$`)
+	reH3Plus        = regexp.MustCompile(`(?m)^#{3,6}\s+(.+)$`)
+	reInlineStyles  = regexp.MustCompile(`(?s)(?:\*{3}(.+?)\*{3}|_{3}(.+?)_{3}|\*{2}(.+?)\*{2}|_{2}(.+?)_{2})`)
+)
 
 // stripMarkdownWithStyles keeps the visible text clean while preserving the
 // emphasis requested by the model as native Zalo styles.
@@ -119,25 +131,81 @@ func stripMarkdownWithStyles(text string) (string, []protocol.TextStyle) {
 	}
 
 	styles := make([]protocol.TextStyle, 0)
-	searchFrom := 0
-	for _, match := range nativeBoldMarkdown.FindAllStringSubmatch(text, -1) {
+
+	// 1. Headings
+	// H1 / H2 -> Green Bold (c_15a85f + b)
+	searchFromH1 := 0
+	for _, match := range reH1H2.FindAllStringSubmatch(text, -1) {
+		content := zalo.StripMarkdown(strings.TrimSpace(match[1]))
+		if content == "" {
+			continue
+		}
+		index := strings.Index(plain[searchFromH1:], content)
+		if index < 0 {
+			continue
+		}
+		index += searchFromH1
+		styles = append(styles,
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_15a85f"},
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
+		)
+		searchFromH1 = index + len(content)
+	}
+
+	// H3+ -> Orange Bold (c_f27806 + b)
+	searchFromH3 := 0
+	for _, match := range reH3Plus.FindAllStringSubmatch(text, -1) {
+		content := zalo.StripMarkdown(strings.TrimSpace(match[1]))
+		if content == "" {
+			continue
+		}
+		index := strings.Index(plain[searchFromH3:], content)
+		if index < 0 {
+			continue
+		}
+		index += searchFromH3
+		styles = append(styles,
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
+			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
+		)
+		searchFromH3 = index + len(content)
+	}
+
+	// 2. Inline styles:
+	// ***text*** -> Orange Bold (c_f27806 + b)
+	// **text** -> Native Bold Black (b)
+	searchFromInline := 0
+	for _, match := range reInlineStyles.FindAllStringSubmatch(text, -1) {
+		isOrange := match[1] != "" || match[2] != ""
 		content := match[1]
 		if content == "" {
 			content = match[2]
 		}
 		if content == "" {
+			content = match[3]
+		}
+		if content == "" {
+			content = match[4]
+		}
+		if content == "" {
 			continue
 		}
-		index := strings.Index(plain[searchFrom:], content)
+		index := strings.Index(plain[searchFromInline:], content)
 		if index < 0 {
 			continue
 		}
-		index += searchFrom
-		styles = append(styles,
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
-		)
-		searchFrom = index + len(content)
+		index += searchFromInline
+		if isOrange {
+			styles = append(styles,
+				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
+				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
+			)
+		} else {
+			styles = append(styles,
+				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
+			)
+		}
+		searchFromInline = index + len(content)
 	}
 	return plain, styles
 }

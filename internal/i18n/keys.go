@@ -25,6 +25,17 @@ const (
 	// 000099; kept for installations still on an earlier schema version.
 	MsgAgentDeleteVaultConflict = "error.agent_delete_vault_conflict"
 
+	// --- Vault scope updates ---
+	MsgVaultContentScopeSeparate     = "vault.content_scope_separate"
+	MsgVaultInvalidScope             = "vault.invalid_scope"
+	MsgVaultTeamScopeRequired        = "vault.team_scope_required"
+	MsgVaultScopeOwnerOnly           = "vault.scope_owner_only"
+	MsgVaultPersonalOwnerRequired    = "vault.personal_owner_required"
+	MsgVaultScopeConflict            = "vault.scope_conflict"
+	MsgVaultUpdateFailed             = "vault.update_failed"
+	MsgVaultUpdateConflict           = "vault.update_conflict"
+	MsgVaultContentUpdateUnavailable = "vault.content_update_unavailable"
+
 	// --- Agent ---
 	MsgAgentNotFound                       = "error.agent_not_found"       // "agent not found: %s"
 	MsgCannotDeleteDefault                 = "error.cannot_delete_default" // "cannot delete the default agent"

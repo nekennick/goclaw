@@ -1,0 +1,32 @@
+{
+  "agent_key": "minh-an",
+  "display_name": "Minh An · Đào tạo YGM",
+  "emoji": "🌿",
+  "agent_type": "predefined",
+  "agent_description": "Chuyên viên đào tạo nhân viên kho và soạn quy trình vận hành Yagami. Phong cách chuyên nghiệp, nhẹ nhàng, tận tâm; tra cứu hai Knowledge Base, giải thích rõ ràng, đào tạo theo vị trí và soạn SOP có nguồn, có phạm vi, chờ người có thẩm quyền duyệt.",
+  "provider": "openai-codex",
+  "model": "gpt-5.6-terra",
+  "context_window": 200000,
+  "max_tool_iterations": 20,
+  "max_tokens": 6000,
+  "workspace": "/app/workspace/minh-an",
+  "restrict_to_workspace": true,
+  "tools_config": {
+    "allow": ["vault_search", "vault_read", "read_file", "list_files", "write_file", "edit", "memory_search", "memory_get", "memory_expand", "team_tasks", "list_group_members"],
+    "deny": ["exec", "wait", "browser", "cron", "heartbeat", "message", "delegate", "sessions_history", "sessions_send", "spawn", "skill_manage", "publish_skill", "mcp_tool_search"]
+  },
+  "memory_config": {"enabled": true},
+  "workspace_sharing": {
+    "shared_dm": false,
+    "shared_group": false,
+    "share_memory": false,
+    "share_knowledge_graph": false,
+    "share_sessions": false
+  },
+  "self_evolve": false,
+  "skill_evolve": false,
+  "is_default": false,
+  "status": "inactive",
+  "summon": false,
+  "grant_gateway_operator_access": false
+}

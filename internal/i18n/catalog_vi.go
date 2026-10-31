@@ -22,6 +22,17 @@ func init() {
 		// TODO(i18n): translate to vi
 		MsgAgentDeleteVaultConflict: "failed to delete agent: a vault document of this agent is at a path another deleted owner already orphaned; delete or re-path this agent's vault documents first, or upgrade to schema version 99 or later",
 
+		// Vault scope updates
+		MsgVaultContentScopeSeparate:     "nội dung và phạm vi tài liệu phải được cập nhật riêng biệt",
+		MsgVaultInvalidScope:             "phạm vi không hợp lệ",
+		MsgVaultTeamScopeRequired:        "team_id yêu cầu phạm vi team",
+		MsgVaultScopeOwnerOnly:           "chỉ chủ sở hữu hệ thống mới có thể thay đổi phạm vi hoặc nhóm của tài liệu",
+		MsgVaultPersonalOwnerRequired:    "phạm vi cá nhân yêu cầu chỉ định agent sở hữu; endpoint này không hỗ trợ chỉ định agent sở hữu",
+		MsgVaultScopeConflict:            "tài liệu đã tồn tại trong phạm vi đích",
+		MsgVaultUpdateFailed:             "không thể cập nhật tài liệu",
+		MsgVaultUpdateConflict:           "tài liệu đã thay đổi hoặc không còn khả dụng; hãy tải lại trước khi cập nhật",
+		MsgVaultContentUpdateUnavailable: "kho lưu trữ này không hỗ trợ cập nhật nội dung tài liệu an toàn",
+
 		// Agent
 		MsgAgentNotFound:                       "không tìm thấy agent: %s",
 		MsgCannotDeleteDefault:                 "không thể xóa agent mặc định",
