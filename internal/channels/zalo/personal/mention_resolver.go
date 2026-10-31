@@ -228,10 +228,15 @@ func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolut
 		}
 		for _, style := range in.styles {
 			start, end := byteRangeForUTF16(in.text, style.Start, style.Len)
-			if start >= offset && end <= limit {
+			if start < 0 || end <= start {
+				continue
+			}
+			intStart := max(start, offset)
+			intEnd := min(end, limit)
+			if intStart < intEnd {
 				chunk.styles = append(chunk.styles, protocol.TextStyle{
-					Start: utf16Length(in.text[offset:start]),
-					Len:   utf16Length(in.text[start:end]),
+					Start: utf16Length(in.text[offset:intStart]),
+					Len:   utf16Length(in.text[intStart:intEnd]),
 					Style: style.Style,
 				})
 			}

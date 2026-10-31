@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"regexp"
-	"strings"
 
 	"github.com/nextlevelbuilder/goclaw/internal/bus"
 	"github.com/nextlevelbuilder/goclaw/internal/channels/typing"
-	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo"
 	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo/personal/protocol"
 )
 
@@ -87,14 +84,15 @@ func (c *Channel) sendFile(ctx context.Context, sess *protocol.Session, chatID s
 }
 
 func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, chatID string, threadType protocol.ThreadType, text string) error {
-	resolved := mentionResolution{text: text}
+	var members []protocol.GroupMemberInfo
 	if threadType == protocol.ThreadTypeGroup {
-		resolved = c.resolveGroupMentions(ctx, chatID, text)
+		var err error
+		members, err = c.groupMembersForSend(ctx, chatID)
+		if err != nil {
+			slog.Warn("zalo_personal: unable to verify group members; sending without native mentions", "group_id", chatID, "error", err)
+		}
 	}
-	plainText, markdownStyles := stripMarkdownWithStyles(resolved.text)
-	resolved.text = plainText
-	resolved.styles = markdownStyles
-	resolved = addZaloReportStyles(resolved)
+	resolved := renderZaloMessage(text, members)
 	for _, chunk := range splitMentionResolution(resolved, maxTextLength) {
 		messageID, err := protocol.SendMessageWithFormatting(ctx, sess, chatID, threadType, chunk.text, chunk.mentions, chunk.styles)
 		if err != nil {
@@ -117,96 +115,9 @@ func (c *Channel) sendChunkedText(ctx context.Context, sess *protocol.Session, c
 	return nil
 }
 
-var (
-	reH1H2          = regexp.MustCompile(`(?m)^#{1,2}\s+(.+)$`)
-	reH3Plus        = regexp.MustCompile(`(?m)^#{3,6}\s+(.+)$`)
-	reInlineStyles  = regexp.MustCompile(`(?s)(?:\*{3}(.+?)\*{3}|_{3}(.+?)_{3}|\*{2}(.+?)\*{2}|_{2}(.+?)_{2})`)
-)
-
 // stripMarkdownWithStyles keeps the visible text clean while preserving the
 // emphasis requested by the model as native Zalo styles.
 func stripMarkdownWithStyles(text string) (string, []protocol.TextStyle) {
-	plain := zalo.StripMarkdown(text)
-	if plain == "" {
-		return plain, nil
-	}
-
-	styles := make([]protocol.TextStyle, 0)
-
-	// 1. Headings
-	// H1 / H2 -> Green Bold (c_15a85f + b)
-	searchFromH1 := 0
-	for _, match := range reH1H2.FindAllStringSubmatch(text, -1) {
-		content := zalo.StripMarkdown(strings.TrimSpace(match[1]))
-		if content == "" {
-			continue
-		}
-		index := strings.Index(plain[searchFromH1:], content)
-		if index < 0 {
-			continue
-		}
-		index += searchFromH1
-		styles = append(styles,
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_15a85f"},
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
-		)
-		searchFromH1 = index + len(content)
-	}
-
-	// H3+ -> Orange Bold (c_f27806 + b)
-	searchFromH3 := 0
-	for _, match := range reH3Plus.FindAllStringSubmatch(text, -1) {
-		content := zalo.StripMarkdown(strings.TrimSpace(match[1]))
-		if content == "" {
-			continue
-		}
-		index := strings.Index(plain[searchFromH3:], content)
-		if index < 0 {
-			continue
-		}
-		index += searchFromH3
-		styles = append(styles,
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
-			protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
-		)
-		searchFromH3 = index + len(content)
-	}
-
-	// 2. Inline styles:
-	// ***text*** -> Orange Bold (c_f27806 + b)
-	// **text** -> Native Bold Black (b)
-	searchFromInline := 0
-	for _, match := range reInlineStyles.FindAllStringSubmatch(text, -1) {
-		isOrange := match[1] != "" || match[2] != ""
-		content := match[1]
-		if content == "" {
-			content = match[2]
-		}
-		if content == "" {
-			content = match[3]
-		}
-		if content == "" {
-			content = match[4]
-		}
-		if content == "" {
-			continue
-		}
-		index := strings.Index(plain[searchFromInline:], content)
-		if index < 0 {
-			continue
-		}
-		index += searchFromInline
-		if isOrange {
-			styles = append(styles,
-				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "c_f27806"},
-				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
-			)
-		} else {
-			styles = append(styles,
-				protocol.TextStyle{Start: utf16Length(plain[:index]), Len: utf16Length(content), Style: "b"},
-			)
-		}
-		searchFromInline = index + len(content)
-	}
-	return plain, styles
+	rendered := renderZaloMessage(text, nil)
+	return rendered.text, rendered.styles
 }
