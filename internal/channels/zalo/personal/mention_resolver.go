@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf16"
@@ -13,12 +14,57 @@ import (
 	"github.com/nextlevelbuilder/goclaw/internal/channels/zalo/personal/protocol"
 )
 
+type BlockKind int
+
+const (
+	BlockParagraph BlockKind = iota
+	BlockHeadingMain
+	BlockHeadingSub
+	BlockBullet
+	BlockQA
+	BlockCodeBlock
+)
+
+type ContentBlock struct {
+	Kind      BlockKind
+	StartByte int
+	EndByte   int
+}
+
+type SubSection struct {
+	HeadingBlock      *ContentBlock
+	FirstContentBlock *ContentBlock
+	Blocks            []ContentBlock
+	StartByte         int
+	EndByte           int
+}
+
+type Section struct {
+	HeadingBlock      *ContentBlock // nil for leading content before first heading
+	FirstContentBlock *ContentBlock
+	SubSections       []SubSection
+	Blocks            []ContentBlock
+	StartByte         int
+	EndByte           int
+}
+
+type DocumentStructure struct {
+	Blocks   []ContentBlock
+	Sections []Section
+}
+
+type byteMentionSpan struct {
+	start, end int
+	mention    *protocol.TMention
+}
+
 // mentionResolution is the rendered Zalo text together with native metadata.
 // All offsets in Mentions are UTF-16 code units as required by Zalo clients.
 type mentionResolution struct {
-	text     string
-	mentions []*protocol.TMention
-	styles   []protocol.TextStyle
+	text      string
+	mentions  []*protocol.TMention
+	styles    []protocol.TextStyle
+	structure DocumentStructure
 }
 
 // resolveNativeMentions accepts only the internal, explicit UID syntax:
@@ -153,8 +199,8 @@ func (c *Channel) rememberGroupMember(groupID, uid, displayName string) {
 	c.membersMu.Unlock()
 }
 
-// splitMentionResolution keeps a native mention wholly inside one chunk. The
-// transport limit is bytes, matching the existing Zalo Personal chunker.
+// splitMentionResolution splits a rendered Zalo message into chunks that respect
+// transport limits (maxBytes), document structure, section boundaries, and native metadata.
 func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolution {
 	if in.text == "" || maxBytes <= 0 {
 		return nil
@@ -163,57 +209,29 @@ func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolut
 		return []mentionResolution{in}
 	}
 
-	byteMentions := make([]struct {
-		start, end int
-		mention    *protocol.TMention
-	}, 0, len(in.mentions))
+	byteMentions := make([]byteMentionSpan, 0, len(in.mentions))
 	for _, mention := range in.mentions {
 		start, end := byteRangeForUTF16(in.text, mention.Pos, mention.Len)
 		if start >= 0 && end > start {
-			byteMentions = append(byteMentions, struct {
-				start, end int
-				mention    *protocol.TMention
-			}{start, end, mention})
+			byteMentions = append(byteMentions, byteMentionSpan{start, end, mention})
 		}
+	}
+
+	structure := in.structure
+	if len(structure.Blocks) == 0 {
+		structure = extractDocumentStructure(in.text)
 	}
 
 	parts := make([]mentionResolution, 0, (len(in.text)/maxBytes)+1)
 	for offset := 0; offset < len(in.text); {
-		limit := offset + maxBytes
-		if limit > len(in.text) {
-			limit = len(in.text)
-		}
-		// Do not leave a short fragment such as "chÆ°a" / "Ä‘áº·t" in its own
-		// bubble. Pull this boundary back so the final report section remains a
-		// readable block.
-		minFinalChunkBytes := 240
-		if maxBytes/3 < minFinalChunkBytes {
-			minFinalChunkBytes = maxBytes / 3
-		}
-		if remaining := len(in.text) - limit; remaining > 0 && remaining < minFinalChunkBytes {
-			limit -= minFinalChunkBytes - remaining
-		}
-		limit = naturalChunkLimit(in.text, offset, limit)
-		for _, span := range byteMentions {
-			if span.start < limit && span.end > limit {
-				limit = span.start
-			}
-		}
+		limit := chooseNextChunkLimit(in.text, offset, maxBytes, structure, byteMentions)
 		if limit <= offset {
-			// A pathological display name can exceed the transport limit. Keep it
-			// intact in one chunk: correctness of the native mention is safer than
-			// silently splitting a person name into two messages.
-			for _, span := range byteMentions {
-				if span.start == offset && span.end > offset {
-					limit = span.end
-					break
-				}
-			}
-			if limit <= offset {
-				limit = offset + maxBytes
-				for limit < len(in.text) && !utf8.RuneStart(in.text[limit]) {
-					limit--
-				}
+			// Absolute guarantee against infinite loop: advance by at least 1 rune
+			_, size := utf8.DecodeRuneInString(in.text[offset:])
+			if size > 0 {
+				limit = offset + size
+			} else {
+				limit = offset + 1
 			}
 		}
 
@@ -247,53 +265,452 @@ func splitMentionResolution(in mentionResolution, maxBytes int) []mentionResolut
 	return parts
 }
 
-// naturalChunkLimit keeps outbound bubbles readable. It prefers a paragraph,
-// then a line, then a word boundary, and only hard-cuts when one line itself
-// exceeds the transport limit.
-func naturalChunkLimit(text string, offset, hardLimit int) int {
-	if hardLimit >= len(text) {
-		return len(text)
+func chooseNextChunkLimit(text string, offset, maxBytes int, doc DocumentStructure, byteMentions []byteMentionSpan) int {
+	totalLen := len(text)
+	if offset >= totalLen {
+		return totalLen
 	}
+	hardLimit := offset + maxBytes
+	if hardLimit >= totalLen {
+		return totalLen
+	}
+
+	// Avoid leaving an ultra-short final fragment (e.g. < 80 bytes) in its own bubble
+	// when possible, by pulling hardLimit back slightly.
+	minFinalChunkBytes := 80
+	if maxBytes/4 < minFinalChunkBytes {
+		minFinalChunkBytes = maxBytes / 4
+	}
+	if remaining := totalLen - hardLimit; remaining > 0 && remaining < minFinalChunkBytes {
+		hardLimit -= minFinalChunkBytes - remaining
+	}
+	if hardLimit <= offset {
+		hardLimit = min(offset+maxBytes, totalLen)
+	}
+
+	// 1. Try Section-level boundaries (Requirements 2 & 3)
+	currSecIdx := -1
+	for i, sec := range doc.Sections {
+		if offset >= sec.StartByte && offset < sec.EndByte {
+			currSecIdx = i
+			break
+		}
+	}
+
+	if currSecIdx >= 0 {
+		currSec := doc.Sections[currSecIdx]
+
+		if offset == currSec.StartByte {
+			// Case 1A: Section fits completely in hardLimit
+			if currSec.EndByte <= hardLimit {
+				bestEnd := currSec.EndByte
+				for nextIdx := currSecIdx + 1; nextIdx < len(doc.Sections); nextIdx++ {
+					nextSec := doc.Sections[nextIdx]
+					if nextSec.EndByte <= hardLimit {
+						bestEnd = nextSec.EndByte
+					} else {
+						// nextSec does not fit in remaining space.
+						// Move entire nextSec to next chunk!
+						break
+					}
+				}
+				return ensureSafeLimit(text, offset, bestEnd, hardLimit, doc, byteMentions)
+			}
+		} else {
+			// Case 1B: We are in the middle of currSec
+			if currSec.EndByte <= hardLimit {
+				bestEnd := currSec.EndByte
+				for nextIdx := currSecIdx + 1; nextIdx < len(doc.Sections); nextIdx++ {
+					nextSec := doc.Sections[nextIdx]
+					if nextSec.EndByte <= hardLimit {
+						bestEnd = nextSec.EndByte
+					} else {
+						break
+					}
+				}
+				return ensureSafeLimit(text, offset, bestEnd, hardLimit, doc, byteMentions)
+			}
+		}
+
+		// 2. Splitting inside currSec: Try SubSection boundaries (Requirement 4)
+		if len(currSec.SubSections) > 0 {
+			bestSubLimit := -1
+			for _, sub := range currSec.SubSections {
+				if sub.StartByte > offset && sub.StartByte <= hardLimit {
+					// Requirement 3: Ensure not cutting right after main heading
+					if currSec.HeadingBlock != nil && sub.StartByte == currSec.HeadingBlock.EndByte {
+						continue
+					}
+					bestSubLimit = sub.StartByte
+				}
+			}
+			if bestSubLimit > offset {
+				return ensureSafeLimit(text, offset, bestSubLimit, hardLimit, doc, byteMentions)
+			}
+		}
+
+		// 3. Splitting inside currSec: Try Block boundaries (Paragraphs, Bullets, Q&A)
+		bestBlockLimit := -1
+		for _, b := range currSec.Blocks {
+			// Block end boundary
+			if b.EndByte > offset && b.EndByte <= hardLimit {
+				// Requirement 3: Never cut immediately after a heading!
+				if b.Kind == BlockHeadingMain || b.Kind == BlockHeadingSub {
+					continue
+				}
+				bestBlockLimit = b.EndByte
+			}
+			// Cut point BEFORE a heading that starts in this chunk
+			if (b.Kind == BlockHeadingMain || b.Kind == BlockHeadingSub) && b.StartByte > offset && b.StartByte <= hardLimit {
+				if b.StartByte > bestBlockLimit {
+					bestBlockLimit = b.StartByte
+				}
+			}
+		}
+		if bestBlockLimit > offset {
+			return ensureSafeLimit(text, offset, bestBlockLimit, hardLimit, doc, byteMentions)
+		}
+	}
+
+	// 4. Try global blocks
+	bestBlockLimit := -1
+	for _, b := range doc.Blocks {
+		if b.EndByte > offset && b.EndByte <= hardLimit {
+			if b.Kind == BlockHeadingMain || b.Kind == BlockHeadingSub {
+				continue
+			}
+			bestBlockLimit = b.EndByte
+		}
+		if (b.Kind == BlockHeadingMain || b.Kind == BlockHeadingSub) && b.StartByte > offset && b.StartByte <= hardLimit {
+			if b.StartByte > bestBlockLimit {
+				bestBlockLimit = b.StartByte
+			}
+		}
+	}
+	if bestBlockLimit > offset {
+		return ensureSafeLimit(text, offset, bestBlockLimit, hardLimit, doc, byteMentions)
+	}
+
+	// 5. Fallback within a single block (Requirement 5): Sentence -> Word -> Rune
+	return fallbackChunkLimit(text, offset, hardLimit, doc, byteMentions)
+}
+
+func rawFallbackChunkLimit(text string, offset, hardLimit int, byteMentions []byteMentionSpan) int {
+	if offset >= hardLimit {
+		return hardLimit
+	}
+	sub := text[offset:hardLimit]
+
+	// A. Sentence boundary: (. ! ? ;) followed by whitespace or newline
+	lastSentenceEnd := -1
+	for i := len(sub) - 1; i > 0; i-- {
+		ch := sub[i-1]
+		if ch == '.' || ch == '!' || ch == '?' || ch == ';' {
+			if sub[i] == ' ' || sub[i] == '\t' || sub[i] == '\n' {
+				cand := offset + i + 1
+				if cand > offset && isMentionSafe(cand, byteMentions) {
+					lastSentenceEnd = cand
+					break
+				}
+			}
+		}
+	}
+	if lastSentenceEnd > offset {
+		return lastSentenceEnd
+	}
+
+	// B. Word boundary: space, tab, newline
+	for i := len(sub) - 1; i > 0; i-- {
+		if sub[i] == ' ' || sub[i] == '\t' || sub[i] == '\n' {
+			cand := offset + i + 1
+			if cand > offset && isMentionSafe(cand, byteMentions) {
+				return cand
+			}
+		}
+	}
+
+	// C. Rune boundary: valid UTF-8
 	limit := hardLimit
 	for limit < len(text) && !utf8.RuneStart(text[limit]) {
 		limit--
 	}
-	if paragraph := strings.LastIndex(text[offset:limit], "\n\n"); paragraph >= 0 {
-		candidate := offset + paragraph + 2
-		// Avoid leaving an orphan heading stranded at the end of a bubble
-		beforeBreak := strings.TrimRight(text[offset:offset+paragraph], " \t\r\n")
-		lastLineStart := strings.LastIndexByte(beforeBreak, '\n')
-		lastLine := beforeBreak
-		if lastLineStart >= 0 {
-			lastLine = beforeBreak[lastLineStart+1:]
+	return limit
+}
+
+func fallbackChunkLimit(text string, offset, hardLimit int, doc DocumentStructure, byteMentions []byteMentionSpan) int {
+	cand := rawFallbackChunkLimit(text, offset, hardLimit, byteMentions)
+	return ensureSafeLimit(text, offset, cand, hardLimit, doc, byteMentions)
+}
+
+func ensureSafeLimit(text string, offset, limit, hardLimit int, doc DocumentStructure, byteMentions []byteMentionSpan) int {
+	if limit > len(text) {
+		limit = len(text)
+	}
+	for limit < len(text) && !utf8.RuneStart(text[limit]) {
+		limit--
+	}
+
+	// Requirement 3: Never leave a heading alone at the end of a chunk
+	for _, b := range doc.Blocks {
+		if b.Kind != BlockHeadingMain && b.Kind != BlockHeadingSub {
+			continue
 		}
-		lastLine = strings.TrimSpace(lastLine)
-		if strings.HasPrefix(lastLine, "#") || (len(lastLine) <= 35 && !strings.ContainsAny(lastLine, ".,;")) {
-			if prevParagraph := strings.LastIndex(text[offset:offset+paragraph], "\n\n"); prevParagraph >= 0 {
-				prevCandidate := offset + prevParagraph + 2
-				if prevCandidate-offset >= 320 {
-					return prevCandidate
+		// Case A: Heading starts in this chunk after offset.
+		// If limit falls inside or immediately after the heading, pull back before the heading!
+		if b.StartByte > offset && limit >= b.StartByte && limit <= b.EndByte {
+			limit = b.StartByte
+			break
+		}
+		// Case B: Chunk starts at this heading. If limit is at or before heading end,
+		// advance into the first content block (if hardLimit allows).
+		if b.StartByte == offset && limit <= b.EndByte && hardLimit > b.EndByte {
+			cand := rawFallbackChunkLimit(text, b.EndByte, hardLimit, byteMentions)
+			if cand > b.EndByte {
+				limit = cand
+			} else {
+				_, size := utf8.DecodeRuneInString(text[b.EndByte:])
+				if size > 0 {
+					limit = b.EndByte + size
 				}
 			}
-		}
-		// A tiny heading-only bubble is no better than a hard cut. Prefer a
-		// paragraph boundary only when it contains a meaningful report block.
-		if candidate-offset >= 320 {
-			return candidate
+			break
 		}
 	}
-	if newline := strings.LastIndexByte(text[offset:limit], '\n'); newline >= 0 {
-		candidate := offset + newline + 1
-		if candidate > offset {
-			return candidate
+
+	// Check against native mentions: never cut inside a mention
+	for _, span := range byteMentions {
+		if span.start < limit && span.end > limit {
+			limit = span.start
 		}
 	}
-	for i := limit - 1; i > offset; i-- {
-		if text[i] == ' ' || text[i] == '\t' {
-			return i + 1
+
+	// Guaranteed progress check (Requirement 10)
+	if limit <= offset {
+		for _, span := range byteMentions {
+			if span.start == offset && span.end > offset {
+				return span.end
+			}
+		}
+		_, size := utf8.DecodeRuneInString(text[offset:])
+		if size > 0 {
+			limit = offset + size
+		} else {
+			limit = offset + 1
 		}
 	}
 	return limit
+}
+
+func isMentionSafe(cutPoint int, byteMentions []byteMentionSpan) bool {
+	for _, span := range byteMentions {
+		if span.start < cutPoint && span.end > cutPoint {
+			return false
+		}
+	}
+	return true
+}
+
+func buildSections(blocks []ContentBlock) []Section {
+	if len(blocks) == 0 {
+		return nil
+	}
+
+	var sections []Section
+	var currentSection *Section
+
+	for i := range blocks {
+		b := blocks[i]
+		if b.Kind == BlockHeadingMain || currentSection == nil {
+			if currentSection != nil {
+				currentSection.EndByte = currentSection.Blocks[len(currentSection.Blocks)-1].EndByte
+				sections = append(sections, *currentSection)
+			}
+			var hBlock *ContentBlock
+			if b.Kind == BlockHeadingMain {
+				hBlock = &blocks[i]
+			}
+			currentSection = &Section{
+				HeadingBlock: hBlock,
+				Blocks:       []ContentBlock{b},
+				StartByte:    b.StartByte,
+			}
+			continue
+		}
+		currentSection.Blocks = append(currentSection.Blocks, b)
+	}
+
+	if currentSection != nil && len(currentSection.Blocks) > 0 {
+		currentSection.EndByte = currentSection.Blocks[len(currentSection.Blocks)-1].EndByte
+		sections = append(sections, *currentSection)
+	}
+
+	for sIdx := range sections {
+		s := &sections[sIdx]
+		for bIdx := range s.Blocks {
+			if s.Blocks[bIdx].Kind != BlockHeadingMain {
+				s.FirstContentBlock = &s.Blocks[bIdx]
+				break
+			}
+		}
+
+		var subSections []SubSection
+		var currentSub *SubSection
+
+		for bIdx := range s.Blocks {
+			blk := s.Blocks[bIdx]
+			if blk.Kind == BlockHeadingSub {
+				if currentSub != nil {
+					currentSub.EndByte = currentSub.Blocks[len(currentSub.Blocks)-1].EndByte
+					subSections = append(subSections, *currentSub)
+				}
+				currentSub = &SubSection{
+					HeadingBlock: &s.Blocks[bIdx],
+					Blocks:       []ContentBlock{blk},
+					StartByte:    blk.StartByte,
+				}
+				continue
+			}
+			if currentSub != nil {
+				currentSub.Blocks = append(currentSub.Blocks, blk)
+			}
+		}
+		if currentSub != nil && len(currentSub.Blocks) > 0 {
+			currentSub.EndByte = currentSub.Blocks[len(currentSub.Blocks)-1].EndByte
+			subSections = append(subSections, *currentSub)
+		}
+
+		for subIdx := range subSections {
+			sub := &subSections[subIdx]
+			for bIdx := range sub.Blocks {
+				if sub.Blocks[bIdx].Kind != BlockHeadingSub {
+					sub.FirstContentBlock = &sub.Blocks[bIdx]
+					break
+				}
+			}
+		}
+		s.SubSections = subSections
+	}
+
+	return sections
+}
+
+func makeContiguousBlocks(blocks []ContentBlock, totalLen int) []ContentBlock {
+	if totalLen == 0 {
+		return nil
+	}
+	if len(blocks) == 0 {
+		return []ContentBlock{{Kind: BlockParagraph, StartByte: 0, EndByte: totalLen}}
+	}
+	blocks[0].StartByte = 0
+	for i := 0; i < len(blocks)-1; i++ {
+		blocks[i].EndByte = blocks[i+1].StartByte
+	}
+	blocks[len(blocks)-1].EndByte = totalLen
+	return blocks
+}
+
+var (
+	reQAQuestionPrefix = regexp.MustCompile(`(?i)^(?:[-*•]\s*)?(?:câu\s*hỏi|hỏi|q)\s*[:.]`)
+	reQAAnswerPrefix   = regexp.MustCompile(`(?i)^(?:[-*•]\s*)?(?:câu\s*trả\s*lời|trả\s*lời|đáp|a)\s*[:.]`)
+)
+
+func isQuestionLine(s string) bool {
+	trimmed := strings.TrimSpace(s)
+	if reQAQuestionPrefix.MatchString(trimmed) {
+		return true
+	}
+	if strings.HasSuffix(trimmed, "?") && utf8.RuneCountInString(trimmed) <= 300 {
+		return true
+	}
+	return false
+}
+
+func isAnswerLine(s string) bool {
+	trimmed := strings.TrimSpace(s)
+	return reQAAnswerPrefix.MatchString(trimmed)
+}
+
+func isIndentedLine(s string) bool {
+	return strings.HasPrefix(s, "  ") || strings.HasPrefix(s, "\t")
+}
+
+func extractDocumentStructure(text string) DocumentStructure {
+	if text == "" {
+		return DocumentStructure{}
+	}
+	lines := strings.Split(text, "\n")
+	var rawBlocks []ContentBlock
+	offset := 0
+	prevBlockIdx := -1
+
+	for i, rawLine := range lines {
+		lineStart := offset
+		lineEnd := lineStart + len(rawLine)
+		if i < len(lines)-1 {
+			lineEnd++
+		}
+		offset = lineEnd
+
+		trimmed := strings.TrimSpace(rawLine)
+		if trimmed == "" {
+			if prevBlockIdx >= 0 && prevBlockIdx < len(rawBlocks) {
+				rawBlocks[prevBlockIdx].EndByte = lineEnd
+			}
+			continue
+		}
+
+		if reHeadingH1H2.MatchString(trimmed) || (reNumberedLine.MatchString(trimmed) && utf8.RuneCountInString(trimmed) <= 60 && !strings.Contains(trimmed, ":")) {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingMain, StartByte: lineStart, EndByte: lineEnd})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		if reHeadingH3Plus.MatchString(trimmed) || (isEmojiReportHeading(trimmed) && utf8.RuneCountInString(trimmed) <= 60) {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingSub, StartByte: lineStart, EndByte: lineEnd})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		if reBulletLine.MatchString(trimmed) || (strings.HasSuffix(trimmed, ":") && len(trimmed) <= 40) {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockBullet, StartByte: lineStart, EndByte: lineEnd})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		if isIndentedLine(rawLine) && prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockBullet {
+			rawBlocks[prevBlockIdx].EndByte = lineEnd
+			continue
+		}
+
+		if isAnswerLine(trimmed) && prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockQA {
+			rawBlocks[prevBlockIdx].EndByte = lineEnd
+			continue
+		}
+
+		if isQuestionLine(trimmed) {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockQA, StartByte: lineStart, EndByte: lineEnd})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		if isAnswerLine(trimmed) {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockQA, StartByte: lineStart, EndByte: lineEnd})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		if prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockParagraph && i > 0 && strings.TrimSpace(lines[i-1]) != "" {
+			rawBlocks[prevBlockIdx].EndByte = lineEnd
+			continue
+		}
+
+		rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockParagraph, StartByte: lineStart, EndByte: lineEnd})
+		prevBlockIdx = len(rawBlocks) - 1
+	}
+
+	blocks := makeContiguousBlocks(rawBlocks, len(text))
+	sections := buildSections(blocks)
+	return DocumentStructure{Blocks: blocks, Sections: sections}
 }
 
 // addZaloReportStyles adds native rich-text formatting to visible report

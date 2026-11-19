@@ -1,11 +1,11 @@
 # Kim — acknowledgement and intermediate delivery
 
-Configured via native GoClaw HTTP administration API on 2026-11-01 (Asia/Bangkok). No Go/UI code or prompt changes, no new agent, no gateway restart and no Zalo test messages.
+Configured via native GoClaw HTTP administration API on 2026-11-01, updated 2026-11-03 (Asia/Bangkok). No Go/UI code or prompt changes, no new agent, no gateway restart and no Zalo test messages.
 
 ## Settings
 
 - Agent `quan-ly-kim`: custom `other_config.delivery_behavior`; see delivery-behavior.json.
-- Quick acknowledgement: fixed template, zero delay: "Em đã nhận yêu cầu, em bắt đầu xử lý ngay ạ." Does not need an extra LLM call. No generated-ack timeout can suppress this fixed template.
+- Quick acknowledgement: disabled (`enabled: false`, `mode: off`) as requested on 2026-11-03. The fixed-template field was removed. Kim's main reply remains generated normally; there is no replacement sidecar acknowledgement.
 - Intermediate: native sidecar_generated, provider `openai-codex`, model `gpt-6.1-terra`, timeout 10000ms, 256 output-token budget, 180-character limit.
 - Channel `zalokim`: removed only `config.chat_behavior` so it inherits Agent delivery policy. Existing channel-level 2500ms/40/60-token overrides would otherwise take precedence.
 - All other channel config and agent other_config values preserved and compared. Credentials fingerprints before/after match. Kim's main model remains gpt-6.1-sol; no cron changes. Channel reload reconnected Zalo successfully.
@@ -15,6 +15,9 @@ Configured via native GoClaw HTTP administration API on 2026-11-01 (Asia/Bangkok
 This is delivery-only messaging, not hidden chain-of-thought. The generated update is triggered by a tool-call event and is not a periodic timer or an 'after N seconds' threshold. The 10000ms timeout is a sidecar generation deadline, not a wait before reporting progress. The generated-progress path sends at most one update per run; separate explicit block replies/announcements from the main agent can also be delivered. A run doing no tools has no generated tool-progress event. Fast completion or an explicit block reply can suppress an in-flight sidecar update. Sidecar failure logs a warning and skips that update; it does not require deleting the agent.
 
 ## Verification
+
+- 2026-11-03: `DisableQuickAck` reads current state, backs up only the prior acknowledgement settings, updates only `delivery_behavior.quick_ack` through the native API, and re-reads it. It verifies that intermediate replies and every other `other_config` value remain unchanged, and channel configuration remains unchanged. `Verify` checks the current disabled-ack policy. No live Zalo test message is sent.
+- The tests below describe the original 2026-11-01 setup, not a new live group-delivery test:
 
 - Existing ChatBehavior/QuickAck/Intermediate/Delivery tests plus a configuration-specific mocked channel test passed with Go race detector in a read-only Docker mount.
 - Simulated run emitted the exact acknowledgement before tool work and then a progress update, without repeated generated progress on another tool call; no messages were sent to real chats.
@@ -31,3 +34,5 @@ The generated before-image is at `.artifacts/kim-delivery-20261101/before.clixml
 ```
 
 Rollback restores only the two delivery-related fields and retains unrelated current settings. Do not delete/recreate the agent or database.
+
+The acknowledgement-only before-image from 2026-11-03 is `.artifacts/kim-delivery-20261103/quick-ack-before.clixml`; it does not include credentials. The `Rollback` action above restores the older 2026-11-01 delivery configuration, not this acknowledgement-only before-image.

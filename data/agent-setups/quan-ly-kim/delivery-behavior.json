@@ -1,13 +1,12 @@
 {
   "enabled": true,
   "quick_ack": {
-    "enabled": true,
-    "mode": "fixed_template",
+    "enabled": false,
+    "mode": "off",
     "min_delay_ms": 0,
     "timeout_ms": 2500,
     "max_tokens": 40,
-    "max_chars": 120,
-    "templates": ["Em đã nhận yêu cầu, em bắt đầu xử lý ngay ạ."]
+    "max_chars": 120
   },
   "intermediate_replies": {
     "enabled": true,

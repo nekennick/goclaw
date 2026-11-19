@@ -1,0 +1,51 @@
+services:
+  warehouse-kb-reader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: warehouse-kb-reader:latest
+    container_name: warehouse-kb-reader
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      - PORT=8080
+      - GOCLAW_ORIGIN=http://goclaw-goclaw-1:18790
+      - TENANT_ID=0193a5b0-7000-7000-8000-000000000001
+      - WAREHOUSE_KB_ROOT=/sources/warehouse-knowledge-base
+      - YAGAMI_KB_ROOT=/sources/yagami-knowledge-base
+      - UPSTREAM_TIMEOUT_MS=5000
+    env_file:
+      - .env
+    volumes:
+      - type: volume
+        source: goclaw_goclaw-workspace
+        target: /sources/warehouse-knowledge-base
+        read_only: true
+        volume:
+          subpath: quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/warehouse-knowledge-base
+      - type: volume
+        source: goclaw_goclaw-workspace
+        target: /sources/yagami-knowledge-base
+        read_only: true
+        volume:
+          subpath: quan-ly-kim/zlo-ql-kim/group_zlo-ql-kim_6244108299423959453/data/yagami-knowledge-base
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    networks:
+      - zalo-agent_default
+      - goclaw_default
+
+networks:
+  zalo-agent_default:
+    external: true
+  goclaw_default:
+    external: true
+
+volumes:
+  goclaw_goclaw-workspace:
+    external: true

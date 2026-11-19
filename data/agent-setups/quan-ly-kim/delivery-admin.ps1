@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][ValidateSet('Inspect','Apply','Verify','Rollback')][string]$Action)
+param([Parameter(Mandatory=$true)][ValidateSet('Inspect','Apply','DisableQuickAck','Verify','Rollback')][string]$Action)
 $ErrorActionPreference='Stop'
 $token=(& docker exec -u goclaw goclaw-goclaw-1 printenv GOCLAW_GATEWAY_TOKEN|Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or !$token) {throw 'Gateway authentication unavailable'}
@@ -49,9 +49,36 @@ switch ($Action) {
         }
         [pscustomobject]@{Applied=$true;Scope='quan-ly-kim + zalokim delivery only';Backup='.artifacts/kim-delivery-20261101/before.clixml';CredentialsTouched=$false}|ConvertTo-Json
     }
+    'DisableQuickAck' {
+        if ($state.channel.config.chat_behavior) {throw 'Channel override exists; inspect before changing agent delivery'}
+        $other=Other $state.agent
+        if (!$other.ContainsKey('delivery_behavior') -or !$other['delivery_behavior']['quick_ack']) {throw 'No explicit quick acknowledgement configuration to update'}
+        $ackBackupDir=Join-Path (Split-Path $backupDir -Parent) 'kim-delivery-20261103'
+        $ackBackupPath=Join-Path $ackBackupDir 'quick-ack-before.clixml'
+        if (!(Test-Path -LiteralPath $ackBackupPath)) {
+            New-Item -ItemType Directory -Force -Path $ackBackupDir|Out-Null
+            @{AgentId=$state.agent.id;QuickAck=$other['delivery_behavior']['quick_ack']}|Export-Clixml -LiteralPath $ackBackupPath -Encoding UTF8
+        }
+        $ack=$other['delivery_behavior']['quick_ack']
+        $ack['enabled']=$false
+        $ack['mode']='off'
+        $ack.Remove('templates')|Out-Null
+        $fresh=Read-State
+        if ((Stable $fresh.channel.config) -cne (Stable $state.channel.config) -or (Stable $fresh.agent.other_config) -cne (Stable $state.agent.other_config)) {throw 'Configuration changed concurrently; nothing applied'}
+        $null=Call PUT "/v1/agents/$($state.agent.id)" @{other_config=$other}
+        $verified=Read-State
+        $actual=Other $verified.agent
+        $savedAck=$actual['delivery_behavior']['quick_ack']
+        if ($savedAck['enabled'] -ne $false -or $savedAck['mode'] -ne 'off' -or $savedAck.ContainsKey('templates')) {throw 'Quick acknowledgement verification failed'}
+        # Replace the verified leaf with its original value to compare everything else.
+        $original=Other $state.agent
+        $actual['delivery_behavior']['quick_ack']=$original['delivery_behavior']['quick_ack']
+        if ((Stable $actual) -cne (Stable $original) -or (Stable $verified.channel.config) -cne (Stable $state.channel.config)) {throw 'Unexpected unrelated configuration change; inspect current state'}
+        [pscustomobject]@{QuickAck='Disabled';FixedTemplate='Removed';IntermediateReplies='Unchanged';OtherConfig='Preserved';ChannelConfig='Unchanged';Backup='.artifacts/kim-delivery-20261103/quick-ack-before.clixml'}|ConvertTo-Json
+    }
     'Verify' {
         $d=$state.agent.other_config.delivery_behavior
-        if (!$d.enabled -or !$d.quick_ack.enabled -or $d.quick_ack.mode -ne 'fixed_template' -or $d.quick_ack.min_delay_ms -ne 0 -or !$d.intermediate_replies.enabled -or $d.intermediate_replies.model -ne 'gpt-6.1-terra' -or $d.intermediate_replies.timeout_ms -ne 10000) {throw 'Agent delivery configuration differs from tested settings'}
+        if (!$d.enabled -or $d.quick_ack.enabled -ne $false -or $d.quick_ack.mode -ne 'off' -or $d.quick_ack.templates -or !$d.intermediate_replies.enabled -or $d.intermediate_replies.model -ne 'gpt-6.1-terra' -or $d.intermediate_replies.timeout_ms -ne 10000) {throw 'Agent delivery configuration differs from expected settings'}
         if ($state.channel.config.chat_behavior) {throw 'Unexpected channel delivery override'}
         $before=Import-Clixml -LiteralPath $backupPath
         $oldCfg=$before.ChannelConfig|ConvertTo-Json -Depth 40|ConvertFrom-Json -AsHashtable
@@ -67,7 +94,7 @@ switch ($Action) {
             return $v
         }
         if ((Stable (Canonical $oldCfg)) -cne (Stable (Canonical $newCfg)) -or (Stable (Canonical $oldOther)) -cne (Stable (Canonical $newOther))) {throw 'Unrelated configuration changed'}
-        [pscustomobject]@{Verified=$true;QuickAck=$d.quick_ack.templates[0];ProgressModel=$d.intermediate_replies.model;TimeoutMs=$d.intermediate_replies.timeout_ms;UnrelatedConfig='Preserved'}|ConvertTo-Json
+        [pscustomobject]@{Verified=$true;QuickAck='Disabled';ProgressModel=$d.intermediate_replies.model;TimeoutMs=$d.intermediate_replies.timeout_ms;UnrelatedConfig='Preserved'}|ConvertTo-Json
     }
     'Rollback' {
         $before=Import-Clixml -LiteralPath $backupPath

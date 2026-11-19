@@ -87,7 +87,28 @@ type groupMembersCacheEntry struct {
 func (c *Channel) BlockReplyEnabled() *bool { return c.config.BlockReply }
 
 // ChatBehaviorConfig returns the per-channel chat_behavior override.
-func (c *Channel) ChatBehaviorConfig() *config.ChatBehaviorConfig { return c.config.ChatBehavior }
+// Zalo Personal handles its own structural chunking with rich-text styles and native mentions,
+// so FinalSplit is disabled by default to avoid generic pre-splitting that disrupts document structure.
+func (c *Channel) ChatBehaviorConfig() *config.ChatBehaviorConfig {
+	cfg := c.config.ChatBehavior
+	if cfg == nil {
+		disabled := false
+		return &config.ChatBehaviorConfig{
+			FinalSplit: &config.FinalSplitConfig{
+				Enabled: &disabled,
+			},
+		}
+	}
+	if cfg.FinalSplit == nil {
+		clone := *cfg
+		disabled := false
+		clone.FinalSplit = &config.FinalSplitConfig{
+			Enabled: &disabled,
+		}
+		return &clone
+	}
+	return cfg
+}
 
 // session returns the current session snapshot (thread-safe).
 func (c *Channel) session() *protocol.Session {

@@ -66,8 +66,12 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 	}
 
 	inCodeBlock := false
+	var rawBlocks []ContentBlock
+	prevBlockIdx := -1
 
 	for i, rawLine := range lines {
+		lineStartByte := builder.Len()
+
 		// 1. Code blocks: preserve verbatim content without markup or mention resolution
 		if reCodeBlockFence.MatchString(rawLine) {
 			inCodeBlock = !inCodeBlock
@@ -77,6 +81,13 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			builder.WriteString(rawLine)
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
+			}
+			lineEndByte := builder.Len()
+			if prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockCodeBlock {
+				rawBlocks[prevBlockIdx].EndByte = lineEndByte
+			} else {
+				rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockCodeBlock, StartByte: lineStartByte, EndByte: lineEndByte})
+				prevBlockIdx = len(rawBlocks) - 1
 			}
 			continue
 		}
@@ -96,6 +107,17 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 
 		trimmed := strings.TrimSpace(line)
 
+		// 3.1 Blank lines: extend previous block to absorb the newline
+		if trimmed == "" {
+			if i < len(lines)-1 {
+				builder.WriteByte('\n')
+			}
+			if prevBlockIdx >= 0 && prevBlockIdx < len(rawBlocks) {
+				rawBlocks[prevBlockIdx].EndByte = builder.Len()
+			}
+			continue
+		}
+
 		// 4. Headings: H1 / H2 -> Green Bold (c_15a85f + b)
 		if match := reHeadingH1H2.FindStringSubmatch(line); match != nil {
 			headingText := strings.TrimSpace(match[1])
@@ -111,6 +133,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
 			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingMain, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 			continue
 		}
 
@@ -129,6 +153,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
 			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingSub, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 			continue
 		}
 
@@ -154,6 +180,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 					if i < len(lines)-1 {
 						builder.WriteByte('\n')
 					}
+					rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockBullet, StartByte: lineStartByte, EndByte: builder.Len()})
+					prevBlockIdx = len(rawBlocks) - 1
 					continue
 				}
 			}
@@ -162,6 +190,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
 			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockBullet, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 			continue
 		}
 
@@ -177,6 +207,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 				if i < len(lines)-1 {
 					builder.WriteByte('\n')
 				}
+				rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockBullet, StartByte: lineStartByte, EndByte: builder.Len()})
+				prevBlockIdx = len(rawBlocks) - 1
 				continue
 			}
 		}
@@ -195,6 +227,8 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
 			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingMain, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 			continue
 		}
 
@@ -212,13 +246,63 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 			if i < len(lines)-1 {
 				builder.WriteByte('\n')
 			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockHeadingSub, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 			continue
 		}
 
-		// 10. General text line
+		// 10. Indented line under bullet or QA (keep together)
+		if isIndentedLine(rawLine) && prevBlockIdx >= 0 && (rawBlocks[prevBlockIdx].Kind == BlockBullet || rawBlocks[prevBlockIdx].Kind == BlockQA) {
+			parseInline(line, &builder, &mentions, &styles, byID, nameCount)
+			if i < len(lines)-1 {
+				builder.WriteByte('\n')
+			}
+			rawBlocks[prevBlockIdx].EndByte = builder.Len()
+			continue
+		}
+
+		// 11. Answer line following QA question (keep together)
+		if isAnswerLine(trimmed) && prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockQA {
+			parseInline(line, &builder, &mentions, &styles, byID, nameCount)
+			if i < len(lines)-1 {
+				builder.WriteByte('\n')
+			}
+			rawBlocks[prevBlockIdx].EndByte = builder.Len()
+			continue
+		}
+
+		// 12. Question line (start QA block)
+		if isQuestionLine(trimmed) {
+			parseInline(line, &builder, &mentions, &styles, byID, nameCount)
+			if i < len(lines)-1 {
+				builder.WriteByte('\n')
+			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockQA, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		// 13. Answer line without preceding question
+		if isAnswerLine(trimmed) {
+			parseInline(line, &builder, &mentions, &styles, byID, nameCount)
+			if i < len(lines)-1 {
+				builder.WriteByte('\n')
+			}
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockQA, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
+			continue
+		}
+
+		// 14. Paragraph continuation or new paragraph
 		parseInline(line, &builder, &mentions, &styles, byID, nameCount)
 		if i < len(lines)-1 {
 			builder.WriteByte('\n')
+		}
+		if prevBlockIdx >= 0 && rawBlocks[prevBlockIdx].Kind == BlockParagraph && i > 0 && strings.TrimSpace(lines[i-1]) != "" {
+			rawBlocks[prevBlockIdx].EndByte = builder.Len()
+		} else {
+			rawBlocks = append(rawBlocks, ContentBlock{Kind: BlockParagraph, StartByte: lineStartByte, EndByte: builder.Len()})
+			prevBlockIdx = len(rawBlocks) - 1
 		}
 	}
 
@@ -228,10 +312,25 @@ func renderZaloMessage(text string, members []protocol.GroupMemberInfo) mentionR
 	// Normalize and merge overlapping/adjacent styles
 	normalizedStyles := normalizeAndMergeStyles(styles, totalLen)
 
+	// Build contiguous blocks matching the final text
+	var cleanBlocks []ContentBlock
+	for _, b := range rawBlocks {
+		if b.StartByte >= len(resultText) {
+			continue
+		}
+		if b.EndByte > len(resultText) {
+			b.EndByte = len(resultText)
+		}
+		cleanBlocks = append(cleanBlocks, b)
+	}
+	blocks := makeContiguousBlocks(cleanBlocks, len(resultText))
+	sections := buildSections(blocks)
+
 	return mentionResolution{
-		text:     resultText,
-		mentions: mentions,
-		styles:   normalizedStyles,
+		text:      resultText,
+		mentions:  mentions,
+		styles:    normalizedStyles,
+		structure: DocumentStructure{Blocks: blocks, Sections: sections},
 	}
 }
 
