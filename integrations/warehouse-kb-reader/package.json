@@ -1,0 +1,24 @@
+{
+  "name": "warehouse-kb-reader",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Read-only MCP microservice connecting Zalo Agent to verified GoClaw warehouse KB sources",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
